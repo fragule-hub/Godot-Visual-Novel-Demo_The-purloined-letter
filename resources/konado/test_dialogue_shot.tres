@@ -1,0 +1,240 @@
+[gd_resource type="Resource" script_class="KND_Shot" format=3 uid="uid://bas25kfqks4uh"]
+
+[ext_resource type="Script" uid="uid://b43741pmwnb8p" path="res://addons/konado/scripts/dialogue/knd_dialogue.gd" id="1_dlg"]
+[ext_resource type="Script" uid="uid://bktw5v4hqxfy0" path="res://addons/konado/scripts/dialogue/knd_shot.gd" id="2_shot"]
+[ext_resource type="Script" uid="uid://bgvixb8twn154" path="res://addons/konado/scripts/dialogue/knd_dialogue_choice.gd" id="2_t80r1"]
+
+[sub_resource type="Resource" id="R1"]
+script = ExtResource("1_dlg")
+dialog_type = 4
+node_id = "n1"
+next_id = "n2"
+background_image_name = "test_room"
+
+[sub_resource type="Resource" id="R2"]
+script = ExtResource("1_dlg")
+dialog_type = 1
+node_id = "n2"
+next_id = "n3"
+character_name = "Eve"
+character_state = "neutral"
+actor_position = Vector2(2, 0)
+
+[sub_resource type="Resource" id="R3"]
+script = ExtResource("1_dlg")
+dialog_type = 1
+node_id = "n3"
+next_id = "n4"
+character_name = "Clara"
+character_state = "preset:intro_default"
+actor_position = Vector2(3, 0)
+
+[sub_resource type="Resource" id="R4"]
+script = ExtResource("1_dlg")
+node_id = "n4"
+next_id = "n5"
+character_id = "Eve"
+dialog_content = "Clara，测试开始了。你是组合立绘系统，我是单图立绘系统。"
+
+[sub_resource type="Resource" id="R5"]
+script = ExtResource("1_dlg")
+node_id = "n5"
+next_id = "n6"
+character_id = "Clara"
+dialog_content = "没错。我有 16 层图层可以自由组合，你只需要一张 PNG。"
+
+[sub_resource type="Resource" id="R6"]
+script = ExtResource("1_dlg")
+node_id = "n6"
+next_id = "n7"
+character_id = "Eve"
+dialog_content = "虽然简单，但切换表情也很方便。让我们各自展示一下吧。"
+
+[sub_resource type="Resource" id="R7"]
+script = ExtResource("1_dlg")
+node_id = "n7"
+next_id = "n8"
+character_id = "Clara"
+dialog_content = "好，我先退出，你来单独测试。"
+
+[sub_resource type="Resource" id="R8"]
+script = ExtResource("1_dlg")
+dialog_type = 5
+node_id = "n8"
+next_id = "n9"
+exit_actor = "Clara"
+
+[sub_resource type="Resource" id="R9"]
+script = ExtResource("1_dlg")
+node_id = "n9"
+next_id = "n10"
+character_id = "我"
+dialog_content = "双人场景结束。接下来单独验证 Eve 的表情切换。"
+
+[sub_resource type="Resource" id="R10"]
+script = ExtResource("1_dlg")
+dialog_type = 2
+node_id = "n10"
+next_id = "n11"
+change_state_actor = "Eve"
+change_state = "angry"
+
+[sub_resource type="Resource" id="R11"]
+script = ExtResource("1_dlg")
+node_id = "n11"
+next_id = "n12"
+character_id = "Eve"
+dialog_content = "切换到 Angry 表情。"
+
+[sub_resource type="Resource" id="R12"]
+script = ExtResource("1_dlg")
+dialog_type = 2
+node_id = "n12"
+next_id = "n13"
+change_state_actor = "Eve"
+change_state = "smile"
+
+[sub_resource type="Resource" id="R13"]
+script = ExtResource("1_dlg")
+node_id = "n13"
+next_id = "n14"
+character_id = "Eve"
+dialog_content = "切换到 Smile 表情。"
+
+[sub_resource type="Resource" id="R14"]
+script = ExtResource("1_dlg")
+dialog_type = 2
+node_id = "n14"
+next_id = "n15"
+change_state_actor = "Eve"
+change_state = "shy"
+
+[sub_resource type="Resource" id="R15"]
+script = ExtResource("1_dlg")
+node_id = "n15"
+next_id = "n16"
+character_id = "Eve"
+dialog_content = "切换到 Shy 表情。Eve 多表情切换测试完成。"
+
+[sub_resource type="Resource" id="R16"]
+script = ExtResource("1_dlg")
+dialog_type = 5
+node_id = "n16"
+next_id = "n17"
+exit_actor = "Eve"
+
+[sub_resource type="Resource" id="R17"]
+script = ExtResource("1_dlg")
+node_id = "n17"
+next_id = "n18"
+character_id = "我"
+dialog_content = "接下来验证 Clara 的组合立绘系统。"
+
+[sub_resource type="Resource" id="R18"]
+script = ExtResource("1_dlg")
+dialog_type = 1
+node_id = "n18"
+next_id = "n19"
+character_name = "Clara"
+character_state = "preset:intro_default"
+actor_position = Vector2(3, 0)
+
+[sub_resource type="Resource" id="R19"]
+script = ExtResource("1_dlg")
+node_id = "n19"
+next_id = "n20"
+character_id = "Clara"
+dialog_content = "我是 Clara，使用组合立绘系统。当前是默认预设（正面、中性表情）。"
+
+[sub_resource type="Resource" id="R20"]
+script = ExtResource("1_dlg")
+dialog_type = 2
+node_id = "n20"
+next_id = "n21"
+change_state_actor = "Clara"
+change_state = "preset:left_smile"
+
+[sub_resource type="Resource" id="R21"]
+script = ExtResource("1_dlg")
+node_id = "n21"
+next_id = "n22"
+character_id = "Clara"
+dialog_content = "切换到左向微笑预设。方向图层已切换。"
+
+[sub_resource type="Resource" id="R22"]
+script = ExtResource("1_dlg")
+dialog_type = 2
+node_id = "n22"
+next_id = "n23"
+change_state_actor = "Clara"
+change_state = "preset:right_coat_smile"
+
+[sub_resource type="Resource" id="R23"]
+script = ExtResource("1_dlg")
+node_id = "n23"
+next_id = "n24"
+character_id = "Clara"
+dialog_content = "切换到右向外套微笑。外套层叠加在衬衫层之上。"
+
+[sub_resource type="Resource" id="R24"]
+script = ExtResource("1_dlg")
+dialog_type = 2
+node_id = "n24"
+next_id = "n25"
+change_state_actor = "Clara"
+change_state = "preset:vest_angry"
+
+[sub_resource type="Resource" id="R25"]
+script = ExtResource("1_dlg")
+node_id = "n25"
+next_id = "n26"
+character_id = "Clara"
+dialog_content = "切换到背心+愤怒预设。背心层可见，配饰为蝴蝶结。"
+
+[sub_resource type="Resource" id="R26"]
+script = ExtResource("1_dlg")
+node_id = "n26"
+next_id = "n27"
+character_id = "我"
+dialog_content = "接下来测试服装冲突规则：同时设置外套和背心。"
+
+[sub_resource type="Resource" id="R27"]
+script = ExtResource("1_dlg")
+dialog_type = 2
+node_id = "n27"
+next_id = "n28"
+change_state_actor = "Clara"
+change_state = "dir=center|outer=coat_01|vest=school_vest"
+
+[sub_resource type="Resource" id="R28"]
+script = ExtResource("1_dlg")
+node_id = "n28"
+next_id = "n29"
+character_id = "Clara"
+dialog_content = "冲突规则应自动隐藏背心（外套优先）。如果看到外套但无背心，说明规则生效。"
+
+[sub_resource type="Resource" id="R29"]
+script = ExtResource("1_dlg")
+dialog_type = 5
+node_id = "n29"
+next_id = "n30"
+exit_actor = "Clara"
+
+[sub_resource type="Resource" id="R30"]
+script = ExtResource("1_dlg")
+node_id = "n30"
+next_id = "n31"
+character_id = "我"
+dialog_content = "迁移测试完成。Eve 单图系统和 Clara 组合立绘系统均正常工作。"
+
+[sub_resource type="Resource" id="R31"]
+script = ExtResource("1_dlg")
+dialog_type = 19
+node_id = "n31"
+
+[resource]
+script = ExtResource("2_shot")
+ks_path = ""
+shot_id = "迁移测试"
+start_node_id = "n1"
+dialogues = Array[ExtResource("1_dlg")]([SubResource("R1"), SubResource("R2"), SubResource("R3"), SubResource("R4"), SubResource("R5"), SubResource("R6"), SubResource("R7"), SubResource("R8"), SubResource("R9"), SubResource("R10"), SubResource("R11"), SubResource("R12"), SubResource("R13"), SubResource("R14"), SubResource("R15"), SubResource("R16"), SubResource("R17"), SubResource("R18"), SubResource("R19"), SubResource("R20"), SubResource("R21"), SubResource("R22"), SubResource("R23"), SubResource("R24"), SubResource("R25"), SubResource("R26"), SubResource("R27"), SubResource("R28"), SubResource("R29"), SubResource("R30"), SubResource("R31")])

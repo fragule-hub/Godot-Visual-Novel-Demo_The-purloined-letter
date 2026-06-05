@@ -1,0 +1,89 @@
+[gd_scene format=3 uid="uid://b47tasu0rx0lr"]
+
+[ext_resource type="Script" uid="uid://bma6hp61cutdx" path="res://scripts/portrait/clara/clara_composite_actor.gd" id="1_ontw1"]
+[ext_resource type="Resource" uid="uid://dlt5kgqljvwnt" path="res://resources/portrait/clara/clara_portrait_db.tres" id="2_8vvgw"]
+
+[node name="ClaraCompositeActor" type="Control" unique_id=1943184159 node_paths=PackedStringArray("slot")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ontw1")
+portrait_db = ExtResource("2_8vvgw")
+slot = NodePath("Slot")
+
+[node name="Slot" type="Control" parent="." unique_id=1137219816]
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 192.0
+offset_right = 191.99951
+
+[node name="LayerStack" type="Control" parent="Slot" unique_id=127689333]
+anchors_preset = 0
+
+[node name="HairBack" type="TextureRect" parent="Slot/LayerStack" unique_id=239740640]
+layout_mode = 0
+expand_mode = 1
+
+[node name="Body" type="TextureRect" parent="Slot/LayerStack" unique_id=138842197]
+layout_mode = 0
+expand_mode = 1
+
+[node name="Inner" type="TextureRect" parent="Slot/LayerStack" unique_id=949652465]
+layout_mode = 0
+expand_mode = 1
+
+[node name="Outer" type="TextureRect" parent="Slot/LayerStack" unique_id=212336333]
+layout_mode = 0
+expand_mode = 1
+
+[node name="Vest" type="TextureRect" parent="Slot/LayerStack" unique_id=677122416]
+layout_mode = 0
+expand_mode = 1
+
+[node name="Accessory" type="TextureRect" parent="Slot/LayerStack" unique_id=379095337]
+layout_mode = 0
+expand_mode = 1
+
+[node name="HairUnder" type="TextureRect" parent="Slot/LayerStack" unique_id=741072120]
+layout_mode = 0
+expand_mode = 1
+
+[node name="Head" type="TextureRect" parent="Slot/LayerStack" unique_id=363541158]
+layout_mode = 0
+expand_mode = 1
+
+[node name="HairSide" type="TextureRect" parent="Slot/LayerStack" unique_id=1809196893]
+layout_mode = 0
+expand_mode = 1
+
+[node name="Ear" type="TextureRect" parent="Slot/LayerStack" unique_id=699681578]
+layout_mode = 0
+expand_mode = 1
+
+[node name="Eyes" type="TextureRect" parent="Slot/LayerStack" unique_id=1376233523]
+layout_mode = 0
+expand_mode = 1
+
+[node name="Brows" type="TextureRect" parent="Slot/LayerStack" unique_id=1440973423]
+layout_mode = 0
+expand_mode = 1
+
+[node name="Mouth" type="TextureRect" parent="Slot/LayerStack" unique_id=981122318]
+layout_mode = 0
+expand_mode = 1
+
+[node name="HairFront" type="TextureRect" parent="Slot/LayerStack" unique_id=841163216]
+layout_mode = 0
+expand_mode = 1
+
+[node name="FaceOverlay" type="TextureRect" parent="Slot/LayerStack" unique_id=1842944071]
+layout_mode = 0
+expand_mode = 1
+
+[node name="HairTop" type="TextureRect" parent="Slot/LayerStack" unique_id=1599558641]
+layout_mode = 0
+expand_mode = 1

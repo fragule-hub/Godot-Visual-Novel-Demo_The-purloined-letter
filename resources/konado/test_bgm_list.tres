@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="KND_BgmList" format=3 uid="uid://ddgflywal6ntp"]
+
+[ext_resource type="Script" uid="uid://bdcmjrcgc4uvn" path="res://addons/konado/scripts/audio/bgm/knd_bgm.gd" id="1_dits3"]
+[ext_resource type="Script" uid="uid://cx11453q1ekqa" path="res://addons/konado/scripts/audio/bgm/knd_bgm_list.gd" id="1_list"]
+
+[resource]
+script = ExtResource("1_list")

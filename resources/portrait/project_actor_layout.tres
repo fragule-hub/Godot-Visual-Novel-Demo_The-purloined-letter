@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PortraitActorLayoutDB" format=3 uid="uid://bmn7tyohu818k"]
+
+[ext_resource type="Script" uid="uid://do0gbh4qunev" path="res://scripts/portrait/portrait_actor_layout_db.gd" id="1_layout"]
+
+[resource]
+script = ExtResource("1_layout")
+actor_layouts = {
+"Clara": {
+"scale": 1.2,
+"slot_y_offset": 1250.0
+},
+"Eve": {
+"scale": 0.9,
+"slot_y_offset": 0.0
+}
+}

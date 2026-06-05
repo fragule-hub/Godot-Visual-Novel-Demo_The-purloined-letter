@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ClaraPortraitDB" format=3 uid="uid://dlt5kgqljvwnt"]
+
+[ext_resource type="Resource" uid="uid://jxtmlm0kmy4c" path="res://resources/portrait/clara/clara_presets.tres" id="1_uns70"]
+[ext_resource type="Script" uid="uid://b02om5jc78jlx" path="res://scripts/portrait/clara/clara_portrait_db.gd" id="2_oqao7"]
+
+[resource]
+script = ExtResource("2_oqao7")
+preset_library = ExtResource("1_uns70")
+display_scale = 1.0
+anchor_y_ratio = 1.0
+conflict_rules = Array[Dictionary]([{
+"set": {
+"vest": "none"
+},
+"when": {
+"outer": "coat_01",
+"vest": "school_vest"
+}
+}])

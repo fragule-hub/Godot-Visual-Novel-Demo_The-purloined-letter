@@ -1,0 +1,14 @@
+[remap]
+
+importer="konado.scripts"
+type="Resource"
+uid="uid://tih6ym32ebsk"
+path="res://.godot/imported/test_migration.ks-60b01a2cb77708bcf59b96d7768c5a49.res"
+
+[deps]
+
+source_file="res://story/test_migration.ks"
+dest_files=["res://.godot/imported/test_migration.ks-60b01a2cb77708bcf59b96d7768c5a49.res"]
+
+[params]
+

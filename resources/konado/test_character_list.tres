@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="KND_CharacterList" format=3 uid="uid://dcd00yqjf2ioq"]
+
+[ext_resource type="Script" uid="uid://5dxx84u6uyy0" path="res://addons/konado/scripts/character/knd_character.gd" id="1_s25tl"]
+[ext_resource type="Script" uid="uid://dxbtmvyauvfln" path="res://addons/konado/scripts/character/knd_character_status.gd" id="2_b0map"]
+[ext_resource type="Texture2D" uid="uid://brpyektd3n74x" path="res://assets/立绘/eve/Eve_Neutral.png" id="3_7j1wn"]
+[ext_resource type="Texture2D" uid="uid://c5srsb2ibj3oo" path="res://assets/立绘/eve/Eve_Smile.png" id="4_ok7u8"]
+[ext_resource type="Texture2D" uid="uid://7o1iurnwbhvg" path="res://assets/立绘/eve/Eve_Shy.png" id="5_shvk0"]
+[ext_resource type="Texture2D" uid="uid://bvtk0e0ocpkgh" path="res://assets/立绘/eve/Eve_Surprise.png" id="6_ksevb"]
+[ext_resource type="Texture2D" uid="uid://bibjhhd55pqtv" path="res://assets/立绘/eve/Eve_Angry.png" id="7_5rvmw"]
+[ext_resource type="Texture2D" uid="uid://cdaroqse4r12e" path="res://assets/立绘/eve/Eve_Laugh.png" id="8_ylmer"]
+[ext_resource type="Texture2D" uid="uid://cbfst2n4vhl8t" path="res://assets/立绘/eve/Eve_Cry.png" id="9_0qu7k"]
+[ext_resource type="Script" uid="uid://bl7m0mtuh2jqi" path="res://addons/konado/scripts/character/knd_character_list.gd" id="10_50f0p"]
+
+[sub_resource type="Resource" id="Resource_bv70c"]
+script = ExtResource("2_b0map")
+status_name = "neutral"
+status_texture = ExtResource("3_7j1wn")
+
+[sub_resource type="Resource" id="Resource_qwqo1"]
+script = ExtResource("2_b0map")
+status_name = "smile"
+status_texture = ExtResource("4_ok7u8")
+
+[sub_resource type="Resource" id="Resource_k8syi"]
+script = ExtResource("2_b0map")
+status_name = "shy"
+status_texture = ExtResource("5_shvk0")
+
+[sub_resource type="Resource" id="Resource_47w4o"]
+script = ExtResource("2_b0map")
+status_name = "surprise"
+status_texture = ExtResource("6_ksevb")
+
+[sub_resource type="Resource" id="Resource_7hwgp"]
+script = ExtResource("2_b0map")
+status_name = "angry"
+status_texture = ExtResource("7_5rvmw")
+
+[sub_resource type="Resource" id="Resource_2o4xx"]
+script = ExtResource("2_b0map")
+status_name = "laugh"
+status_texture = ExtResource("8_ylmer")
+
+[sub_resource type="Resource" id="Resource_cna27"]
+script = ExtResource("2_b0map")
+status_name = "cry"
+status_texture = ExtResource("9_0qu7k")
+
+[sub_resource type="Resource" id="Resource_xnvbu"]
+script = ExtResource("1_s25tl")
+chara_name = "Eve"
+chara_status = Array[ExtResource("2_b0map")]([SubResource("Resource_bv70c"), SubResource("Resource_qwqo1"), SubResource("Resource_k8syi"), SubResource("Resource_47w4o"), SubResource("Resource_7hwgp"), SubResource("Resource_2o4xx"), SubResource("Resource_cna27")])
+
+[sub_resource type="Resource" id="Resource_6u3h7"]
+script = ExtResource("1_s25tl")
+chara_name = "Clara"
+
+[resource]
+script = ExtResource("10_50f0p")
+characters = Array[ExtResource("1_s25tl")]([SubResource("Resource_xnvbu"), SubResource("Resource_6u3h7")])

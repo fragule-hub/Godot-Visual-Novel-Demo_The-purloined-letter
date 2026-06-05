@@ -1,0 +1,104 @@
+[gd_resource type="Resource" script_class="ClaraPresetLibrary" format=3 uid="uid://jxtmlm0kmy4c"]
+
+[ext_resource type="Script" uid="uid://c6puwr4ecspg1" path="res://scripts/portrait/clara/clara_preset.gd" id="1_q483a"]
+
+[resource]
+script = ExtResource("1_q483a")
+presets = {
+"angry": {
+"accessory": "none",
+"body": "base",
+"dir": "center",
+"ear": "base",
+"face": "angry",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "none",
+"vest": "none"
+},
+"coat_smile": {
+"accessory": "none",
+"body": "base",
+"dir": "center",
+"ear": "base",
+"face": "smile",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "coat_01",
+"vest": "none"
+},
+"intro_default": {
+"accessory": "none",
+"body": "base",
+"dir": "center",
+"ear": "base",
+"face": "neutral",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "none",
+"vest": "none"
+},
+"left_smile": {
+"accessory": "none",
+"body": "base",
+"dir": "left",
+"ear": "base",
+"face": "smile",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "none",
+"vest": "none"
+},
+"right_coat_smile": {
+"accessory": "none",
+"body": "base",
+"dir": "right",
+"ear": "base",
+"face": "smile",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "coat_01",
+"vest": "none"
+},
+"vest_angry": {
+"accessory": "ribbon",
+"body": "base",
+"dir": "center",
+"ear": "base",
+"face": "angry",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "none",
+"vest": "school_vest"
+}
+}
