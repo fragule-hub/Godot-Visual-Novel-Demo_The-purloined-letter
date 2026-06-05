@@ -122,6 +122,7 @@ func _takeover_traditional_tween() -> void:
 		_active_tween.finished.connect(_on_typing_completed)
 		_active_tween.tween_property(label, "visible_ratio", 1.0, remaining_time) \
 			.set_trans(Tween.TRANS_LINEAR)
+		_dialogue_box.typing_tween = _active_tween
 		print("[ICP]   created _active_tween from ratio %.3f, remaining=%d, time=%.2f" % [current_ratio, remaining_chars, remaining_time])
 	else:
 		print("[ICP]   NO manager tween found — this is the race condition!")
@@ -132,10 +133,10 @@ func _takeover_traditional_tween() -> void:
 		_active_tween.finished.connect(_on_typing_completed)
 		_active_tween.tween_property(label, "visible_ratio", 1.0, remaining_time) \
 			.set_trans(Tween.TRANS_LINEAR)
+		_dialogue_box.typing_tween = _active_tween
 		print("[ICP]   created _active_tween (else branch), remaining=%d, time=%.2f" % [remaining_chars, remaining_time])
-	# 接管完成后按命令状态设置 suppress
-	if _commands.size() > 0:
-		_suppress_typing_completed = true
+	# manager tween 已被 kill，_active_tween 是唯一活跃 tween，重置 suppress
+	_suppress_typing_completed = false
 
 
 # ============================================================
@@ -313,8 +314,7 @@ func _end_ellipsis_pause() -> void:
 func _save_and_kill_tween() -> void:
 	if _active_tween and _active_tween.is_valid():
 		_active_tween.kill()
-	elif _dialogue_box.typing_tween and _dialogue_box.typing_tween.is_valid():
-		_dialogue_box.typing_tween.kill()
+	_dialogue_box.typing_tween = null
 
 
 ## 恢复传统模式：从保存位置重建 tween
@@ -339,6 +339,7 @@ func _resume_traditional() -> void:
 	_active_tween.finished.connect(_on_typing_completed)
 	_active_tween.tween_property(label, "visible_ratio", 1.0, remaining_time) \
 		.set_trans(Tween.TRANS_LINEAR)
+	_dialogue_box.typing_tween = _active_tween
 
 
 ## 变速（传统模式）：从当前位置用新速度重建 tween
@@ -353,6 +354,7 @@ func _restart_traditional_tween(interval: float) -> void:
 	_active_tween.finished.connect(_on_typing_completed)
 	_active_tween.tween_property(label, "visible_ratio", 1.0, remaining_time) \
 		.set_trans(Tween.TRANS_LINEAR)
+	_dialogue_box.typing_tween = _active_tween
 	print("[ICP]   new tween: remaining=%d, time=%.3f" % [remaining_chars, remaining_time])
 
 

@@ -1,11 +1,9 @@
 [gd_resource type="Resource" script_class="ClaraPortraitDB" format=3 uid="uid://dlt5kgqljvwnt"]
 
-[ext_resource type="Resource" uid="uid://jxtmlm0kmy4c" path="res://resources/portrait/clara/clara_presets.tres" id="1_uns70"]
 [ext_resource type="Script" uid="uid://b02om5jc78jlx" path="res://scripts/portrait/clara/clara_portrait_db.gd" id="2_oqao7"]
 
 [resource]
 script = ExtResource("2_oqao7")
-preset_library = ExtResource("1_uns70")
 display_scale = 1.0
 anchor_y_ratio = 1.0
 conflict_rules = Array[Dictionary]([{
@@ -17,3 +15,101 @@ conflict_rules = Array[Dictionary]([{
 "vest": "school_vest"
 }
 }])
+presets = {
+"angry": {
+"accessory": "none",
+"body": "base",
+"dir": "center",
+"ear": "base",
+"face": "angry",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "none",
+"vest": "none"
+},
+"coat_smile": {
+"accessory": "none",
+"body": "base",
+"dir": "center",
+"ear": "base",
+"face": "smile",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "coat_01",
+"vest": "none"
+},
+"intro_default": {
+"accessory": "none",
+"body": "base",
+"dir": "center",
+"ear": "base",
+"face": "neutral",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "none",
+"vest": "none"
+},
+"left_smile": {
+"accessory": "none",
+"body": "base",
+"dir": "left",
+"ear": "base",
+"face": "smile",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "none",
+"vest": "none"
+},
+"right_coat_smile": {
+"accessory": "none",
+"body": "base",
+"dir": "right",
+"ear": "base",
+"face": "smile",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "coat_01",
+"vest": "none"
+},
+"vest_angry": {
+"accessory": "ribbon",
+"body": "base",
+"dir": "center",
+"ear": "base",
+"face": "angry",
+"hair_back": "base",
+"hair_front": "base",
+"hair_side": "base",
+"hair_top": "base",
+"hair_under": "base",
+"head": "base",
+"inner": "shirt_01",
+"outer": "none",
+"vest": "school_vest"
+}
+}

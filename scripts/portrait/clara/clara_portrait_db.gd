@@ -1,7 +1,6 @@
 extends Resource
 class_name ClaraPortraitDB
 
-@export var preset_library: Resource
 @export var canvas_size: Vector2i = Vector2i(1000, 2000)
 @export var display_scale: float = 1.42
 ## 画布底部锚定在视口的哪个比例位置（0.0=顶部, 1.0=底部）
@@ -239,16 +238,10 @@ class_name ClaraPortraitDB
 
 
 func get_preset(preset_id: String) -> Dictionary:
-	if preset_library:
-		var library_preset_value: Variant = preset_library.call("get_preset", preset_id)
-		if library_preset_value is Dictionary:
-			var library_preset: Dictionary = library_preset_value
-			if not library_preset.is_empty():
-				return library_preset
 	var preset_value: Variant = presets.get(preset_id, {})
 	if preset_value is Dictionary:
-		var preset_state: Dictionary = preset_value
-		return preset_state.duplicate(true)
+		return (preset_value as Dictionary).duplicate(true)
+	push_warning("ClaraPortraitDB: 预设 '%s' 未找到" % preset_id)
 	return {}
 
 
