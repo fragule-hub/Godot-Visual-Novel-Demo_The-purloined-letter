@@ -161,7 +161,7 @@ func _process(_delta: float) -> void:
 	_check_commands_at(char_index)
 
 
-## 检查并执行当前位置的命令
+## FADE_IN 模式：按位置执行命令
 func _check_commands_at(current_pos: int) -> void:
 	while _next_cmd_index < _commands.size():
 		var cmd: Dictionary = _commands[_next_cmd_index]
@@ -394,7 +394,7 @@ func _on_typing_completed() -> void:
 		print("[ICP]   all commands done → emit typing_completed")
 		_dialogue_box.typing_completed.emit()
 	else:
-		# 还有命令未执行（理论上不应到达这里）
+		# 还有命令未执行（_process 会在下一帧处理）
 		print("[ICP]   commands remaining (%d/%d) → NOT emitting" % [_next_cmd_index, _commands.size()])
 	_in_typing_handler = false
 

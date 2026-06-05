@@ -72,6 +72,3 @@ func open_save_ui() -> void:
 func close_save_ui() -> void:
 	# 隐藏界面
 	visible = false
-
-func _process(delta: float) -> void:
-	pass

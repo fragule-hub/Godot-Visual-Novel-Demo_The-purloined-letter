@@ -58,10 +58,6 @@ func _ready() -> void:
 		review_btn.pressed.connect(_on_review_btn_pressed)
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
-	
 func _on_continue_btn_pressed() -> void:
 	continue_pressed.emit()
 

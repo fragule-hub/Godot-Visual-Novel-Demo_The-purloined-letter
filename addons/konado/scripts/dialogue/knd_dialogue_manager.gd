@@ -686,6 +686,8 @@ func _dialogue_goto_state(dialogstate: DialogState) -> void:
 	justenter = true
 	# 切换状态到
 	dialogueState = dialogstate
+	# PAUSED 状态下禁用 _process，减少空闲帧开销
+	set_process(dialogstate != DialogState.PAUSED)
 	print_rich("[color=yellow]切换状态到: [/color]" + str(dialogueState))
 
 ## 导航到下一个节点
