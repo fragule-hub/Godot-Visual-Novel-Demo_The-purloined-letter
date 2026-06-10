@@ -6,11 +6,15 @@
 script = ExtResource("1_layout")
 actor_layouts = {
 "Clara": {
+"actor_type": "composite",
+"content_offset": Vector2(0, 1250),
 "scale": 1.2,
-"slot_y_offset": 1250.0
+"viewport_size": Vector2(1000, 2000)
 },
 "Eve": {
-"scale": 0.9,
-"slot_y_offset": 0.0
+"actor_type": "simple",
+"content_offset": Vector2(0, 0),
+"scale": 0.55,
+"viewport_size": Vector2(1070, 1800)
 }
 }

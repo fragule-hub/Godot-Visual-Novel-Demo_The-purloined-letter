@@ -3,7 +3,7 @@
 [ext_resource type="Theme" uid="uid://6o5ku57ox1bu" path="res://addons/konado/template/theme/left_theme.tres" id="1_m70cm"]
 [ext_resource type="Script" uid="uid://b3xcpatqnlrg" path="res://addons/konado/scripts/knd_settings_bridge.gd" id="2_m70cm"]
 [ext_resource type="Script" uid="uid://dpo124xwpder5" path="res://addons/konado/scripts/dialogue/knd_dialogue_manager.gd" id="2_tn0i2"]
-[ext_resource type="Script" uid="uid://bcnxl7u4dy6fl" path="res://scripts/portrait/clara/clara_acting_interface.gd" id="3_clara"]
+[ext_resource type="Script" path="res://scripts/portrait/portrait_acting_interface.gd" id="3_acting"]
 [ext_resource type="PackedScene" uid="uid://b3wibk1ya0b6j" path="res://addons/konado/template/knd_dialogue_box_left.tscn" id="4_m70cm"]
 [ext_resource type="Script" uid="uid://b0kbsxqyedoml" path="res://addons/konado/scripts/dialogue/knd_choice_interface.gd" id="5_k5ucr"]
 [ext_resource type="Script" uid="uid://gh6w15d30qe7" path="res://addons/konado/scripts/save_system/save_load_ui.gd" id="6_5t7mf"]
@@ -57,7 +57,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxEmpty_b1osp")
-script = ExtResource("3_clara")
+script = ExtResource("3_acting")
 
 [node name="BackgroundLayer" type="ColorRect" parent="KonadoUI/ActingInterface" unique_id=1847484051]
 layout_mode = 2

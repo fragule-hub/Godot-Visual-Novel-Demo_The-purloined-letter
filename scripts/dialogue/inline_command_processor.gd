@@ -191,11 +191,13 @@ func _execute_command(cmd: Dictionary) -> void:
 			if parts.size() > 1:
 				max_dots = clampi(parts[1].strip_edges().to_int(), 3, 6)
 			_execute_wait_pause(seconds, max_dots, cmd.pos)
+		"bounce":
+			_execute_bounce(cmd.params)
 		_:
 			push_warning("InlineCommandProcessor: 未知标签类型 '%s'" % cmd.type)
 
 
-## 切换立绘状态
+## 切换立绘状态（渐变切换）
 func _execute_change(params: String) -> void:
 	var comma_idx := params.find(",")
 	if comma_idx < 0:
@@ -208,10 +210,36 @@ func _execute_change(params: String) -> void:
 	if actor_node == null:
 		push_warning("change 标签：角色 '%s' 未找到" % actor_name)
 		return
-	if actor_node.has_method("apply_state"):
+	# 优先使用 fade_apply_state（渐变切换），回退到 apply_state
+	if actor_node.has_method("fade_apply_state"):
+		actor_node.call("fade_apply_state", state)
+	elif actor_node.has_method("apply_state"):
 		actor_node.call("apply_state", state)
 	else:
-		push_warning("change 标签：角色 '%s' 不支持 apply_state" % actor_name)
+		push_warning("change 标签：角色 '%s' 不支持状态切换" % actor_name)
+
+
+## 立绘跳动
+func _execute_bounce(params: String) -> void:
+	var parts: PackedStringArray = params.split(",", false)
+	var actor_name: String = parts[0].strip_edges()
+	var count: int = 1
+	var height: float = 25.0
+	var duration: float = 0.18
+	if parts.size() > 1:
+		count = clampi(parts[1].strip_edges().to_int(), 1, 10)
+	if parts.size() > 2:
+		height = clampf(parts[2].strip_edges().to_float(), 5.0, 200.0)
+	if parts.size() > 3:
+		duration = clampf(parts[3].strip_edges().to_float(), 0.05, 1.0)
+	var actor_node: Node = _acting_interface.get_chara_node(actor_name)
+	if actor_node == null:
+		push_warning("bounce 标签：角色 '%s' 未找到" % actor_name)
+		return
+	if actor_node.has_method("play_bounce"):
+		actor_node.call("play_bounce", count, height, duration)
+	else:
+		push_warning("bounce 标签：角色 '%s' 不支持 play_bounce" % actor_name)
 
 
 ## 暂停打字
@@ -380,22 +408,20 @@ func _on_typing_completed() -> void:
 	if _suppress_typing_completed:
 		_suppress_typing_completed = false
 		if _paused:
-			# 等待期间 tween 结束 — 由 speed 命令创建的 tween 跑完了，忽略
-			# 玩家跳过由 skip_anim() 处理，不经过此路径
 			print("[ICP]   suppress + paused (tween finished mid-wait) → ignore")
 		else:
-			# suppress=true, paused=false → manager tween finished during takeover, ignore
 			print("[ICP]   suppress consumed (manager tween) → NOT emitting")
 	elif _paused:
-		# 有命令暂停中（wait/wait_pause），tween 不应在此时触发完成
 		print("[ICP]   paused without suppress (speed tween finished mid-wait) → NOT emitting")
-	elif _next_cmd_index >= _commands.size():
-		# 所有命令已执行，打字真正完成
-		print("[ICP]   all commands done → emit typing_completed")
-		_dialogue_box.typing_completed.emit()
 	else:
-		# 还有命令未执行（_process 会在下一帧处理）
-		print("[ICP]   commands remaining (%d/%d) → NOT emitting" % [_next_cmd_index, _commands.size()])
+		# 修复时序竞争：tween 回调可能在 _process 执行最后命令之前触发
+		# 这里强制追赶到 total_chars，确保所有命令在判断之前执行完毕
+		_check_commands_at(_total_chars)
+		if _next_cmd_index >= _commands.size():
+			print("[ICP]   all commands done → emit typing_completed")
+			_dialogue_box.typing_completed.emit()
+		else:
+			print("[ICP]   commands remaining (%d/%d) → NOT emitting" % [_next_cmd_index, _commands.size()])
 	_in_typing_handler = false
 
 

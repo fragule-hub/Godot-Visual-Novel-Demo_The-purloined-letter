@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://dvsqqh6x5x2vh"]
+
+[ext_resource type="Script" uid="uid://dn6ff6oc72wf" path="res://scripts/portrait/simple_portrait_actor.gd" id="1_spa"]
+
+[node name="SimplePortraitActor" type="Control" unique_id=2009097061 node_paths=PackedStringArray("slot")]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_spa")
+slot = NodePath("Slot")
+
+[node name="Slot" type="Control" parent="." unique_id=1645411418]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 192.0
+offset_right = 192.00049
+grow_horizontal = 2
+grow_vertical = 2

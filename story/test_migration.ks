@@ -5,6 +5,43 @@
 background test_room
 
 # ================================================================
+# Eve 单独测试（单图立绘 + 表情切换）
+# ================================================================
+actor show Eve neutral at 2
+
+"Eve" "现在我来展示表情切换。"
+
+actor change Eve angry
+"Eve" "切换到 Angry 表情。"
+
+actor change Eve smile
+"Eve" "切换到 Smile 表情。"
+
+actor change Eve shy
+"Eve" "切换到 Shy 表情。Eve 多表情切换测试完成。"
+
+actor exit Eve
+
+# ================================================================
+# 跳动动画 + 渐变切换测试（优先验证）
+# ================================================================
+actor show Clara preset:intro_default at 3
+
+# --- bounce 跳动测试 ---
+"Clara" "看我跳一下！{bounce:Clara}很简单对吧？"
+"Clara" "连续跳三下！{bounce:Clara,3}厉害吧！"
+"Clara" "大力跳！{bounce:Clara,1,60,0.3}跳得又高又慢。"
+"Clara" "轻轻抖一下{bounce:Clara,2,10,0.1}细微的抖动。"
+"Clara" "跳动加换表情：{bounce:Clara,2}{change:Clara,preset:angry}跳完就生气！"
+
+# --- change 渐变切换测试 ---
+"Clara" "渐变切换测试：{change:Clara,preset:left_smile}微笑（带淡入淡出）"
+"Clara" "再来：{change:Clara,preset:right_coat_smile}外套微笑（带淡入淡出）"
+"Clara" "恢复默认：{change:Clara,preset:intro_default}"
+
+actor exit Clara
+
+# ================================================================
 # 内联命令测试（{wait} / {change} / {speed}）
 # ================================================================
 actor show Clara preset:intro_default at 3
@@ -50,31 +87,17 @@ actor change Clara preset:intro_default
 # ================================================================
 # Eve + Clara 双人场景测试
 # ================================================================
-"Eve" "Clara，测试开始了。你是组合立绘系统，我是单图立绘系统。"
+"Clara" "Eve 已经测试完了她的表情切换。接下来我们双人配合。"
 
 actor show Eve neutral at 2
 
 "Clara" "没错。我有 16 层图层可以自由组合，你只需要一张 PNG。"
-"Eve" "虽然简单，但切换表情也很方便。让我们各自展示一下吧。"
-"Clara" "好，我先退出，你来单独测试。"
+"Eve" "虽然简单，但切换表情也很方便。"
+"Clara" "好，我们各自展示一下组合效果。"
 
 actor exit Clara
 
-# ========== Eve 单独测试 ==========
-"Eve" "现在我来展示表情切换。"
-
-actor change Eve angry
-"Eve" "切换到 Angry 表情。"
-
-actor change Eve smile
-"Eve" "切换到 Smile 表情。"
-
-actor change Eve shy
-"Eve" "切换到 Shy 表情。Eve 多表情切换测试完成。"
-
-actor exit Eve
-
-# ========== Clara 单独测试 ==========
+# ========== Clara 组合立绘详细测试 ==========
 actor show Clara preset:intro_default at 3
 "Clara" "我是 Clara，使用组合立绘系统。当前是默认预设（正面、中性表情）。"
 

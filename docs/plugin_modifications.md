@@ -78,3 +78,21 @@ var _ellipsis_original_ratio: float = 1.0
 **原因:** `{wait_pause:X,N}` 内联命令需要在长停顿期间显示循环省略号动画，给玩家视觉反馈表明游戏并未卡死。
 
 **影响:** `show/update/hide_ellipsis` 方法仅由 `InlineCommandProcessor` 在处理 `{wait_pause}` 标签时调用，不涉及时正常对话流程不受影响，零副作用。
+
+---
+
+## 2026-06-10: 新增 play_bounce() 和 fade_apply_state()
+
+**文件:** `addons/konado/template/character/konado_actor.gd`
+
+**改动:**
+
+新增两个方法（在 `set_character_texture()` 之后）：
+
+1. `play_bounce(count: int = 1, height: float = 25.0, duration: float = 0.18)` — 立绘跳动动画。通过 tween 交替动画 `slot.position.y` 实现弹跳效果。支持可配置的跳动次数、高度和时长。
+
+2. `fade_apply_state(state_text: String) -> void` — 带淡入淡出的状态切换基类方法。基类实现为空（pass），供子类（如 ClaraCompositeActor / ViewportActorBase）覆盖实现交叉溶解效果。
+
+**原因:** ICP（InlineCommandProcessor）内联命令系统需要在打字过程中通过 `{bounce:角色名}` 和 `{change:角色名,state}` 标签触发立绘动画和状态切换。
+
+**影响:** 无 ICP 命令调用时行为完全不变，零副作用。

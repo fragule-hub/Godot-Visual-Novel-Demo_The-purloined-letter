@@ -116,7 +116,29 @@ func set_character_texture(texture: Texture) -> void:
 	if texture == null:
 		push_error("正在试图设置一个空角色图像")
 	texture_rect.texture = texture
-	
+
+
+## 跳动动画：向上弹跳指定次数，不阻塞打字
+## count: 跳动次数, height: 弹跳高度(px), duration: 单次周期时长(s)
+func play_bounce(count: int = 1, height: float = 25.0, duration: float = 0.18) -> void:
+	count = clampi(count, 1, 10)
+	height = clampf(height, 5.0, 200.0)
+	duration = clampf(duration, 0.05, 1.0)
+	var tween: Tween = create_tween()
+	var bounce_amount: float = -height
+	for i in count:
+		tween.tween_property(slot, "position:y", slot.position.y + bounce_amount, duration * 0.45) \
+			.set_ease(Tween.EASE_OUT) \
+			.set_trans(Tween.TRANS_QUAD)
+		tween.tween_property(slot, "position:y", slot.position.y, duration * 0.55) \
+			.set_ease(Tween.EASE_IN) \
+			.set_trans(Tween.TRANS_BOUNCE)
+
+
+## 带淡入淡出的状态切换（基础实现，子类可覆盖）
+func fade_apply_state(state_text: String) -> void:
+	# 基类无状态解析，子类（如 PortraitActorBase / CompositePortraitActor）覆盖此方法实现完整逻辑
+	pass
 
 
 @export var slot: Control
