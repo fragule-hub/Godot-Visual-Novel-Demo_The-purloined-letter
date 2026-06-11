@@ -170,7 +170,8 @@ play sfx <资源名>     # 播放音效（Sound Effect）
 
 **示例**：
 ```ks
-play bgm main_theme
+play bgm title
+play bgm easygoing
 play sfx door_open
 ```
 
@@ -179,6 +180,21 @@ play sfx door_open
 ```
 stop bgm     # 停止背景音乐
 ```
+
+#### 可用 BGM 资源名（Available BGM Resource Names）
+
+| 资源名 | 原始文件名 | 情境描述 |
+|--------|-----------|----------|
+| `title` | 标题音乐 | 标题画面 |
+| `easygoing` | 优哉游哉(loop) | 放学后轻松散步，无多余的人打扰 |
+| `pink_blood` | 粉色血液 | 从轻缓到激动，约会、两情相悦 |
+| `anecdote` | 轶事性知识 | 一段尘封的故事娓娓道来、悲伤 |
+| `circulation` | Circulation(loop) | 夜间漫步、思考将来 |
+| `rest` | Rest time | 安静的酒吧 |
+| `battle` | Start the battle | 乱入、突入 |
+| `waiting` | Waiting | 被打断、搞笑 |
+
+> 标注 `(loop)` 的曲目适合循环播放。在 `.ks` 中使用：`play bgm easygoing`
 
 ---
 

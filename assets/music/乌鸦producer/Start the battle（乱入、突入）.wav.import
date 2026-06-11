@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://gvrm26bsmu2f"
+path="res://.godot/imported/Start the battle（乱入、突入）.wav-3ce180ca29705d6496603c94b0290460.sample"
+
+[deps]
+
+source_file="res://assets/music/乌鸦producer/Start the battle（乱入、突入）.wav"
+dest_files=["res://.godot/imported/Start the battle（乱入、突入）.wav-3ce180ca29705d6496603c94b0290460.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
