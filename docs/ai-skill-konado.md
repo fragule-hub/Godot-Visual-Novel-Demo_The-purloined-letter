@@ -115,8 +115,8 @@ actor show <角色名> <状态> [at <位置>]
 **示例**：
 ```ks
 actor show Eve neutral at 2
-actor show Clara preset:intro_default at 3
-actor show Clara dir=left|face=smile at 4
+actor show Clara at 3
+actor show Clara preset:dir_left|face=smile at 4
 ```
 
 #### 切换角色状态（change）
@@ -128,7 +128,7 @@ actor change <角色名> <新状态>
 **示例**：
 ```ks
 actor change Eve angry
-actor change Clara preset:left_smile
+actor change Clara preset:dir_left|face=smile
 actor change Clara dir=center|outer=coat_01|vest=school_vest
 ```
 
@@ -406,8 +406,8 @@ end
 
 **示例**：
 ```ks
-"Clara" "本来很平静，但是{change:Clara,preset:angry}突然生气了！"
-"Clara" "让我换个表情...{change:Clara,preset:left_smile}现在微笑了。"
+"Clara" "本来很平静，但是{change:Clara,face=angry}突然生气了！"
+"Clara" "让我换个表情...{change:Clara,preset:dir_left|face=smile}现在微笑了。"
 ```
 
 #### `{speed}` — 改变打字速度
@@ -462,13 +462,13 @@ end
 
 ```ks
 # 跳动 + 换表情
-"Clara" "跳动加换表情：{bounce:Clara,2}{change:Clara,preset:angry}跳完就生气！"
+"Clara" "跳动加换表情：{bounce:Clara,2}{change:Clara,face=angry}跳完就生气！"
 
 # 全组合测试
-"Clara" "嗯...{wait:0.8}{change:Clara,preset:left_smile}{speed:15}慢慢地、微笑着说...{wait:0.5}{change:Clara,preset:angry}{speed:50}但是突然就生气了！{change:Clara,preset:intro_default}{speed:25}好，恢复正常。"
+"Clara" "嗯...{wait:0.8}{change:Clara,preset:dir_left|face=smile}{speed:15}慢慢地、微笑着说...{wait:0.5}{change:Clara,face=angry}{speed:50}但是突然就生气了！{change:Clara,face=neutral}{speed:25}好，恢复正常。"
 
 # 省略号停顿 + 换表情
-"Clara" "我在思考{wait_pause:2.0,3}{change:Clara,preset:angry}想完就生气！"
+"Clara" "我在思考{wait_pause:2.0,3}{change:Clara,face=angry}想完就生气！"
 ```
 
 ---
@@ -498,14 +498,12 @@ end
 | 8 | `head` | 头部 |
 | 9 | `hair_side` | 侧发 |
 | 10 | `ear` | 耳朵 |
-| 11 | `eyes` | 眼睛细节层 |
-| 12 | `brows` | 眉毛细节层 |
-| 13 | `mouth` | 嘴巴细节层 |
-| 14 | `hair_front` | 前发 |
-| 15 | `face_overlay` | 表情覆盖层（核心表情层） |
-| 16 | `hair_top` | 顶发 |
+| 11 | `eyes` | **眼睛组件（28种表情各自的眼睛）** |
+| 12 | `mouth` | **嘴型组件（28种表情各自的嘴型）** |
+| 13 | `hair_front` | 前发 |
+| 14 | `hair_top` | 顶发 |
 
-> **重要**：`eyes`、`brows`、`mouth` 是细节叠加层，当前均默认为 `"none"`（隐藏）。表情主要通过 `face_overlay` 控制。
+> **组件化面部系统**：Clara 的表情由 `eyes`（眼睛）+ `mouth`（嘴型）两个独立组件合成，不再使用 `face_overlay`。每个表情的 eyes 和 mouth 从 PSD 源文件的 eyes/mouth 像素层提取。`brows` 和 `face_overlay` 已从 slot_order 中移除。
 
 ### 4.3 方向（Directions）
 
@@ -520,54 +518,125 @@ end
 res://assets/立绘/clara/layers/{direction}/{slot}/{option}.png
 ```
 
-### 4.4 预设（Presets）
+### 4.4 3重预设系统（Direction → Body → Face）
 
-| 预设名 | 方向 | 表情 | 外套 | 背心 | 配饰 |
-|--------|------|------|------|------|------|
-| `intro_default` | center | neutral | none | none | none |
-| `left_smile` | left | smile | none | none | none |
-| `coat_smile` | center | smile | coat_01 | none | none |
-| `right_coat_smile` | right | smile | coat_01 | none | none |
-| `vest_angry` | center | angry | none | school_vest | ribbon |
+Clara 使用 **3 层独立预设叠加**，每层只负责自己的槽位，互不干扰。
 
-### 4.5 表情系统（Face Presets）
+#### 方向预设（direction_presets）
 
-| 表情名 | face_overlay | eyes | brows | mouth |
-|--------|-------------|------|-------|-------|
-| `neutral` | neutral | none | none | none |
-| `smile` | smile | none | none | none |
-| `angry` | angry | none | none | none |
+| 预设名 | 设置的 slot | 说明 |
+|--------|------------|------|
+| `preset:dir_center` | `dir=center` | 正向（**默认**） |
+| `preset:dir_left` | `dir=left` | 面向左 |
+| `preset:dir_right` | `dir=right` | 面向右 |
 
-> 系统通过 `face` 键自动展开对应的 `face_overlay`/`eyes`/`brows`/`mouth` 子层。
+#### 身体预设（body_presets）
+
+| 预设名 | inner | outer | vest | accessory | 说明 |
+|--------|-------|-------|------|-----------|------|
+| `preset:body_casual` | shirt_01 | none | none | none | 短袖常服（**默认**） |
+| `preset:body_coat` | shirt_01 | coat_01 | none | none | 穿外套 |
+| `preset:body_formal` | shirt_01 | none | school_vest | ribbon | 马甲 + 蝴蝶结 |
+| `preset:body_coat_formal` | shirt_01 | coat_01 | school_vest | ribbon | 外套 + 马甲（冲突规则移除马甲） |
+
+#### 表情预设（face_presets）
+
+见 4.5 节，通过 `face=xxx` 展开为 `eyes` + `mouth`。
+
+#### 组合方式
+
+```
+preset:dir_left|preset:body_coat|face=happy
+```
+
+3 层预设按固定优先级（方向 → 身体 → 表情 → 自定义覆盖）叠加：
+1. 方向预设只设 `dir`
+2. 身体预设只设 `inner`/`outer`/`vest`/`accessory`
+3. 表情预设展开为 `eyes` + `mouth`
+4. 任何 `key=value` 覆盖前面所有层
+
+### 4.5 表情系统（Face Presets，共28种）
+
+所有表情由 `eyes`（眼睛）+ `mouth`（嘴型）两个独立组件合成。face_presets 自动展开 `face` 键为对应的 `eyes` 和 `mouth` 选项。
+
+**常用表情（18种）：**
+
+| 表情名 | eyes | mouth | 眼睛状态 | 视觉描述 | 剧本使用场景 |
+|--------|------|-------|----------|----------|-------------|
+| `neutral` | neutral_open | neutral | 睁开 | 无表情，默认 | 一般对话、日常登场 |
+| `smile` | happy_open | happy | 睁开 | 微笑（闭眼笑，别名 happy） | 友好、轻松 |
+| `happy` | happy_open | happy | 睁开 | 开心笑（张嘴笑） | 大笑、非常高兴 |
+| `angry` | angry_open | angry | 睁开 | 生气 | 一般愤怒、吐槽 |
+| `furious` | furious_closed | furious | **闭眼** | 暴怒 | 极度愤怒 |
+| `surprise` | surprised_open | surprised | 睁开 | 惊讶（张嘴） | 突然发现、震惊 |
+| `sad` | sad_open | sad | 睁开 | 悲伤 | 难过、沮丧 |
+| `confused` | confused_open | confused | 睁开 | 困惑 | 不理解、疑惑 |
+| `serious` | serious_open | serious | 睁开 | 严肃 | 认真思考、庄重 |
+| `confident` | confident_open | confident | 睁开 | 自信 | 自信满满、行动宣言 |
+| `embarrassed` | embarrassed_open | embarrassed | 睁开 | 尴尬（含红晕） | 被揭穿、出丑 |
+| `blush` | blush_open | blush | 睁开 | 脸红（含红晕） | 害羞、心动 |
+| `smirk` | smirk_open | smirk | 睁开 | 奸笑 | 不怀好意、坏笑 |
+| `mock` | mock_open | mock | 睁开 | 嘲弄 | 嘲讽、取笑 |
+| `crying` | crying_open | crying | 睁开 | 哭泣（含泪） | 悲伤哭泣 |
+| `exhausted` | exhausted_open | exhausted | 睁开 | 筋疲力尽（含阴影） | 累坏了 |
+| `sleepy` | sleepy_open | sleepy | 睁开 | 困倦 | 想睡觉 |
+| `scared` | scared_open | scared | 睁开 | 害怕 | 恐惧 |
+
+**备选表情（11种）：**
+
+| 表情名 | eyes | mouth | 眼睛状态 | 视觉描述 |
+|--------|------|-------|----------|----------|
+| `fright` | fright_open | fright | 睁开 | 惊恐（含汗滴） |
+| `terror` | terror_open | terror | 睁开 | 恐惧（更强烈） |
+| `sobbing` | sobbing_open | sobbing | 睁开 | 啜泣（含泪） |
+| `unease` | unease_open | unease | 睁开 | 不安 |
+| `tired` | tired_open | tired | 睁开 | 疲惫 |
+| `disgusted` | disgusted_open | disgusted | 睁开 | 厌恶 |
+| `nauseating` | nauseating_open | nauseating | 睁开 | 恶心（含汗滴） |
+| `kiss` | kiss_open | kiss | 睁开 | 亲吻（嘟嘴） |
+| `soulless` | soulless_open | soulless | 睁开 | 无神 |
+| `psychotic` | psychotic_open | psychotic | 睁开 | 疯狂 |
+| `stoic` | stoic_open | stoic | 睁开 | 冷静/淡然 |
+
+> 系统通过 `face` 键自动展开为 `eyes` 和 `mouth` 子层。组件文件位于：
+> - Eyes: `assets/立绘/clara/layers/{direction}/eyes/{expr}_{open|closed}.png`
+> - Mouth: `assets/立绘/clara/layers/{direction}/mouth/{expr}.png`
+> 
+> ⚠ **注意**：不同方向的 PSD 可能有不同的眼睛状态（如 center 的 furious 是 closed，left 的 blush 是 closed）。face_presets 以 center 为参考。当目标方向没有对应文件时，自动回退到 center。
 
 ### 4.6 状态字符串语法（State String Syntax）
 
 状态字符串用于 `actor show`/`actor change` 和内联 `{change}` 标签中。
 
-#### 预设模式
+#### 3重预设模式
 ```
-preset:预设名
+preset:dir_xxx|preset:body_xxx|face=xxx
 ```
-**示例**：`preset:intro_default`、`preset:left_smile`、`preset:angry`
+每层 preset 只设置对应槽位，各层互不干扰。未指定的层使用默认值（center + casual + neutral）。
 
-#### 键值模式（Pipe-separated Key=Value）
+**示例**：
+```ks
+preset:dir_left|preset:body_coat|face=happy
+preset:dir_left|face=angry
+preset:body_formal|face=confident
+```
+
+#### 键值模式
 ```
 key=value|key=value|...
 ```
-**可用键名**：`dir`, `body`, `inner`, `outer`, `vest`, `hair_back`, `hair_under`, `head`, `hair_side`, `ear`, `eyes`, `brows`, `mouth`, `hair_front`, `hair_top`, `face_overlay`, `face`, `accessory`
+**可用键名**：`dir`, `body`, `inner`, `outer`, `vest`, `hair_back`, `hair_under`, `head`, `hair_side`, `ear`, `eyes`, `mouth`, `hair_front`, `hair_top`, `face`, `accessory`
 
 **示例**：
 ```ks
 dir=left|face=smile
-dir=center|outer=coat_01|vest=school_vest
 face=angry|accessory=ribbon
 ```
 
 #### 混合模式
-先应用预设，再用键值覆盖：
 ```ks
-preset:intro_default|face=angry
-preset:left_smile|accessory=ribbon
+preset:dir_left|preset:body_coat|face=happy|mouth=smirk
+face=angry|outer=coat_01
 ```
 
 ### 4.7 服装冲突规则（Conflict Rules）
@@ -593,7 +662,8 @@ actor change Clara dir=center|outer=coat_01|vest=school_vest
 | `inner` | `shirt_01` |
 | `outer` | `none`, `coat_01` |
 | `vest` | `none`, `school_vest` |
-| `face_overlay` | `none`, `neutral`, `smile`, `angry` |
+| `eyes` | `none`, `angry_open`, `blush_open`, `confident_open`, `confused_open`, `crying_open`, `disgusted_open`, `embarrassed_open`, `exhausted_open`, `fright_open`, `furious_closed`, `happy_open`, `kiss_open`, `mock_open`, `nauseating_open`, `neutral_open`, `psychotic_open`, `sad_open`, `scared_open`, `serious_open`, `sleepy_open`, `smirk_open`, `sobbing_open`, `soulless_open`, `stoic_open`, `surprised_open`, `terror_open`, `tired_open`, `unease_open` |
+| `mouth` | `none`, `angry`, `blush`, `confident`, `confused`, `crying`, `disgusted`, `embarrassed`, `exhausted`, `fright`, `furious`, `happy`, `kiss`, `mock`, `nauseating`, `neutral`, `psychotic`, `sad`, `scared`, `serious`, `sleepy`, `smirk`, `sobbing`, `soulless`, `stoic`, `surprised`, `terror`, `tired`, `unease` |
 | `hair_front` | `base` |
 | `hair_top` | `none`, `base` |
 | `accessory` | `none`, `ribbon`, `jewelry` |
@@ -669,7 +739,7 @@ actor exit Eve                     # Eve 退场
 # 第一章：相遇
 background classroom alpha_fade
 
-actor show Clara preset:intro_default at 3
+actor show Clara face=neutral at 3
 
 "Clara" "你好，我是 Clara。"
 "Clara" "欢迎来到这个世界。"
@@ -683,29 +753,29 @@ actor show Eve neutral at 1
 ### 7.2 角色表情切换
 
 ```ks
-actor show Clara preset:intro_default at 3
+actor show Clara face=neutral at 3
 
 "Clara" "今天天气真好。"
-actor change Clara preset:left_smile
+actor change Clara preset:dir_left|face=smile
 "Clara" "心情也不错呢。"
-actor change Clara preset:vest_angry
+actor change Clara preset:body_formal|face=angry
 "Clara" "但是！你迟到了！"
-actor change Clara preset:intro_default
+actor change Clara face=neutral
 "Clara" "算了，原谅你了。"
 ```
 
 ### 7.3 Clara 服装切换
 
 ```ks
-actor show Clara preset:intro_default at 3
+actor show Clara face=neutral at 3
 "Clara" "这是我的校服。"
 
 # 换上外套
-actor change Clara preset:coat_smile
+actor change Clara preset:body_coat|face=smile
 "Clara" "加件外套。"
 
 # 换上背心+蝴蝶结
-actor change Clara preset:vest_angry
+actor change Clara preset:body_formal|face=angry
 "Clara" "或者换成背心加蝴蝶结。"
 
 # 手动指定任意组合
@@ -776,13 +846,13 @@ branch check_affection
 ```ks
 background schoolyard
 
-actor show Clara preset:intro_default at 3
+actor show Clara face=neutral at 3
 "Clara" "Eve，你也来了？"
 
 actor show Eve neutral at 1
 "Eve" "嗯，今天天气不错。"
 
-actor change Clara preset:left_smile
+actor change Clara preset:dir_left|face=smile
 "Clara" "一起去散步吧。"
 
 # Eve 换表情
@@ -799,13 +869,13 @@ actor exit Eve
 ### 7.7 带内联命令的丰富对话
 
 ```ks
-actor show Clara preset:intro_default at 3
+actor show Clara face=neutral at 3
 
 # 等待 + 换表情
-"Clara" "让我想想...{wait:1.5}{change:Clara,preset:left_smile}想起来了！"
+"Clara" "让我想想...{wait:1.5}{change:Clara,preset:dir_left|face=smile}想起来了！"
 
 # 跳动 + 生气
-"Clara" "你说什么？！{bounce:Clara,2}{change:Clara,preset:angry}太气人了！"
+"Clara" "你说什么？！{bounce:Clara,2}{change:Clara,face=angry}太气人了！"
 
 # 变速对话
 "Clara" "{speed:60}快点快点快点快点！{speed:20}...呼，慢下来了。"
@@ -814,7 +884,7 @@ actor show Clara preset:intro_default at 3
 "Clara" "其实我...{wait_pause:3.0,3}嗯，没什么。"
 
 # 综合：停顿后换表情再变速
-"Clara" "等一下...{wait:0.8}{change:Clara,preset:left_smile}{speed:15}慢慢地、微笑着说...{wait:0.5}{change:Clara,preset:angry}{speed:50}但是突然就生气了！{change:Clara,preset:intro_default}{speed:25}好，恢复正常。"
+"Clara" "等一下...{wait:0.8}{change:Clara,preset:dir_left|face=smile}{speed:15}慢慢地、微笑着说...{wait:0.5}{change:Clara,face=angry}{speed:50}但是突然就生气了！{change:Clara,face=neutral}{speed:25}好，恢复正常。"
 
 actor exit Clara
 ```
@@ -825,7 +895,7 @@ actor exit Clara
 play bgm morning_theme
 background classroom alpha_fade
 
-actor show Clara preset:intro_default at 3
+actor show Clara face=neutral at 3
 "Clara" "新的一天开始了。"
 
 play sfx bell_ring
@@ -851,7 +921,7 @@ end
 ### 8.1 Clara 与 Eve 的区别
 
 - **Eve**：在 `KND_CharacterList` 中定义了 `chara_status` 数组（每项含 `status_name` + `status_texture`），使用 `SimplePortraitActor` 渲染。
-- **Clara**：在 `KND_CharacterList` 中**只有名字**，没有 `chara_status`。她使用 `CompositePortraitActor` + `ClaraPortraitDB` 管理图层，状态通过 `preset:xxx` 或 `key=value` 格式指定。
+- **Clara**：在 `KND_CharacterList` 中**只有名字**，没有 `chara_status`。她使用 `CompositePortraitActor` + `ClaraPortraitDB` 管理图层，状态通过 `preset:xxx` 或 `key=value` 格式指定。面部表情由 `eyes` + `mouth` 组件合成，通过 `face=xxx` 展开。
 
 ### 8.2 资源名精确匹配
 

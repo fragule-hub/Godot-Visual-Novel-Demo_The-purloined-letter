@@ -6,42 +6,42 @@
 [sub_resource type="Resource" id="Resource_title"]
 script = ExtResource("1_bgm")
 bgm_name = "title"
-bgm = ExtResource("uid://b5bd6n18labjd")
+bgm = null
 
 [sub_resource type="Resource" id="Resource_easygoing"]
 script = ExtResource("1_bgm")
 bgm_name = "easygoing"
-bgm = ExtResource("uid://w7yfmrw3bvox")
+bgm = null
 
 [sub_resource type="Resource" id="Resource_pink_blood"]
 script = ExtResource("1_bgm")
 bgm_name = "pink_blood"
-bgm = ExtResource("uid://ckx0txfbhghls")
+bgm = null
 
 [sub_resource type="Resource" id="Resource_anecdote"]
 script = ExtResource("1_bgm")
 bgm_name = "anecdote"
-bgm = ExtResource("uid://crudu4hbvayi5")
+bgm = null
 
 [sub_resource type="Resource" id="Resource_circulation"]
 script = ExtResource("1_bgm")
 bgm_name = "circulation"
-bgm = ExtResource("uid://dq8s3gvpewnqq")
+bgm = null
 
 [sub_resource type="Resource" id="Resource_rest"]
 script = ExtResource("1_bgm")
 bgm_name = "rest"
-bgm = ExtResource("uid://cx3hb4a52wdlo")
+bgm = null
 
 [sub_resource type="Resource" id="Resource_battle"]
 script = ExtResource("1_bgm")
 bgm_name = "battle"
-bgm = ExtResource("uid://gvrm26bsmu2f")
+bgm = null
 
 [sub_resource type="Resource" id="Resource_waiting"]
 script = ExtResource("1_bgm")
 bgm_name = "waiting"
-bgm = ExtResource("uid://bdo4bi2ma0ds3")
+bgm = null
 
 [resource]
 script = ExtResource("1_list")

@@ -6,110 +6,21 @@
 script = ExtResource("2_oqao7")
 display_scale = 1.0
 anchor_y_ratio = 1.0
-conflict_rules = Array[Dictionary]([{
-"set": {
-"vest": "none"
-},
-"when": {
-"outer": "coat_01",
-"vest": "school_vest"
-}
-}])
-presets = {
-"angry": {
-"accessory": "none",
-"body": "base",
+slot_order = Array[String](["hair_back", "body", "outer", "face", "hair_side", "ear", "hair_front", "hair_top"])
+default_state = {
 "dir": "center",
-"ear": "base",
-"face": "angry",
-"hair_back": "base",
-"hair_front": "base",
-"hair_side": "base",
-"hair_top": "base",
-"hair_under": "base",
-"head": "base",
-"inner": "shirt_01",
+"body": "base",
 "outer": "none",
-"vest": "none"
-},
-"coat_smile": {
-"accessory": "none",
-"body": "base",
-"dir": "center",
-"ear": "base",
-"face": "smile",
 "hair_back": "base",
-"hair_front": "base",
-"hair_side": "base",
-"hair_top": "base",
-"hair_under": "base",
-"head": "base",
-"inner": "shirt_01",
-"outer": "coat_01",
-"vest": "none"
-},
-"intro_default": {
-"accessory": "none",
-"body": "base",
-"dir": "center",
+"hair_side": "none",
 "ear": "base",
 "face": "neutral",
-"hair_back": "base",
 "hair_front": "base",
-"hair_side": "base",
-"hair_top": "base",
-"hair_under": "base",
-"head": "base",
-"inner": "shirt_01",
-"outer": "none",
-"vest": "none"
-},
-"left_smile": {
-"accessory": "none",
-"body": "base",
-"dir": "left",
-"ear": "base",
-"face": "smile",
-"hair_back": "base",
-"hair_front": "base",
-"hair_side": "base",
-"hair_top": "base",
-"hair_under": "base",
-"head": "base",
-"inner": "shirt_01",
-"outer": "none",
-"vest": "none"
-},
-"right_coat_smile": {
-"accessory": "none",
-"body": "base",
-"dir": "right",
-"ear": "base",
-"face": "smile",
-"hair_back": "base",
-"hair_front": "base",
-"hair_side": "base",
-"hair_top": "base",
-"hair_under": "base",
-"head": "base",
-"inner": "shirt_01",
-"outer": "coat_01",
-"vest": "none"
-},
-"vest_angry": {
-"accessory": "ribbon",
-"body": "base",
-"dir": "center",
-"ear": "base",
-"face": "angry",
-"hair_back": "base",
-"hair_front": "base",
-"hair_side": "base",
-"hair_top": "base",
-"hair_under": "base",
-"head": "base",
-"inner": "shirt_01",
-"outer": "none",
-"vest": "school_vest"
+"hair_top": "base"
 }
+direction_presets = {
+"dir_center": {"dir": "center"},
+"dir_left": {"dir": "left", "hair_side": "base"},
+"dir_right": {"dir": "right", "hair_side": "base"}
 }
+conflict_rules = Array[Dictionary]([])

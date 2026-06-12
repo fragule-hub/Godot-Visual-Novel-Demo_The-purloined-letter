@@ -8,240 +8,220 @@ class_name ClaraPortraitDB
 @export var default_direction: String = "center"
 @export var directions: Array[String] = ["center", "left", "right"]
 @export var fallback_texture: Texture2D
+## 组件化渲染顺序
 @export var slot_order: Array[String] = [
 	"hair_back",
 	"body",
-	"inner",
 	"outer",
-	"vest",
-	"accessory",
-	"hair_under",
-	"head",
+	"face",
 	"hair_side",
 	"ear",
-	"eyes",
-	"brows",
-	"mouth",
 	"hair_front",
-	"face_overlay",
 	"hair_top"
 ]
 @export var default_state: Dictionary = {
 	"dir": "center",
 	"body": "base",
-	"inner": "shirt_01",
 	"outer": "none",
-	"vest": "none",
 	"hair_back": "base",
-	"hair_under": "base",
-	"head": "base",
-	"hair_side": "base",
+	"hair_side": "none",
 	"ear": "base",
-	"hair_front": "base",
-	"hair_top": "base",
 	"face": "neutral",
-	"eyes": "none",
-	"brows": "none",
-	"mouth": "none",
-	"face_overlay": "neutral",
-	"accessory": "none"
+	"hair_front": "base",
+	"hair_top": "base"
 }
 @export var slot_options: Dictionary = {
 	"body": ["base"],
 	"hair_back": ["base"],
-	"hair_under": ["none", "base"],
-	"head": ["none", "base"],
-	"hair_side": ["none", "base"],
+	"hair_side": ["base", "none"],
 	"ear": ["none", "base"],
-	"inner": ["shirt_01"],
 	"outer": ["none", "coat_01"],
-	"vest": ["none", "school_vest"],
-	"eyes": ["none"],
-	"brows": ["none"],
-	"mouth": ["none"],
-	"face_overlay": ["none", "neutral", "smile", "angry"],
+	"face": ["neutral", "angry", "happy", "surprised", "sad", "confused",
+		"serious", "confident", "embarrassed", "blush", "smirk", "mock",
+		"furious", "scared", "fright", "terror", "crying", "sobbing",
+		"unease", "tired", "exhausted", "sleepy", "disgusted", "nauseating",
+		"kiss", "soulless", "psychotic", "stoic"],
 	"hair_front": ["base"],
-	"hair_top": ["none", "base"],
-	"accessory": ["none", "ribbon", "jewelry"]
+	"hair_top": ["none", "base"]
 }
-@export var presets: Dictionary = {
-	"intro_default": {
-		"dir": "center",
-		"body": "base",
-		"inner": "shirt_01",
-		"outer": "none",
-		"vest": "none",
-		"hair_back": "base",
-		"hair_under": "base",
-		"head": "base",
-		"hair_side": "base",
-		"ear": "base",
-		"hair_front": "base",
-		"hair_top": "base",
-		"face": "neutral",
-		"accessory": "none"
-	},
-	"left_smile": {
-		"dir": "left",
-		"body": "base",
-		"inner": "shirt_01",
-		"outer": "none",
-		"vest": "none",
-		"hair_back": "base",
-		"hair_under": "base",
-		"head": "base",
-		"hair_side": "base",
-		"ear": "base",
-		"hair_front": "base",
-		"hair_top": "base",
-		"face": "smile",
-		"accessory": "none"
-	},
-	"coat_smile": {
-		"dir": "center",
-		"body": "base",
-		"inner": "shirt_01",
-		"outer": "coat_01",
-		"vest": "none",
-		"hair_back": "base",
-		"hair_under": "base",
-		"head": "base",
-		"hair_side": "base",
-		"ear": "base",
-		"hair_front": "base",
-		"hair_top": "base",
-		"face": "smile",
-		"accessory": "none"
-	},
-	"right_coat_smile": {
-		"dir": "right",
-		"body": "base",
-		"inner": "shirt_01",
-		"outer": "coat_01",
-		"vest": "none",
-		"hair_back": "base",
-		"hair_under": "base",
-		"head": "base",
-		"hair_side": "base",
-		"ear": "base",
-		"hair_front": "base",
-		"hair_top": "base",
-		"face": "smile",
-		"accessory": "none"
-	},
-	"vest_angry": {
-		"dir": "center",
-		"body": "base",
-		"inner": "shirt_01",
-		"outer": "none",
-		"vest": "school_vest",
-		"hair_back": "base",
-		"hair_under": "base",
-		"head": "base",
-		"hair_side": "base",
-		"ear": "base",
-		"hair_front": "base",
-		"hair_top": "base",
-		"face": "angry",
-		"accessory": "ribbon"
-	}
+## ── 3重预设系统 ──
+## 方向预设：只设 dir（KS语法: preset:dir_left）
+@export var direction_presets: Dictionary = {
+	"dir_center": {"dir": "center"},
+	"dir_left":   {"dir": "left", "hair_side": "base"},
+	"dir_right":  {"dir": "right", "hair_side": "base"},
 }
+## 身体预设：只设 outer
+@export var body_presets: Dictionary = {
+	"body_casual":      {"outer": "none"},
+	"body_coat":        {"outer": "coat_01"},
+}
+## 面部预设：face=xxx 直接映射到 face slot
 @export var face_presets: Dictionary = {
-	"neutral": {
-		"eyes": "none",
-		"brows": "none",
-		"mouth": "none",
-		"face_overlay": "neutral"
-	},
-	"smile": {
-		"eyes": "none",
-		"brows": "none",
-		"mouth": "none",
-		"face_overlay": "smile"
-	},
-	"angry": {
-		"eyes": "none",
-		"brows": "none",
-		"mouth": "none",
-		"face_overlay": "angry"
-	}
+	"neutral":    {"face": "neutral"},
+	"smile":      {"face": "happy"},
+	"angry":      {"face": "angry"},
+	"happy":      {"face": "happy"},
+	"surprise":   {"face": "surprised"},
+	"surprised":  {"face": "surprised"},
+	"sad":        {"face": "sad"},
+	"confused":   {"face": "confused"},
+	"serious":    {"face": "serious"},
+	"confident":  {"face": "confident"},
+	"embarrassed":{"face": "embarrassed"},
+	"blush":      {"face": "blush"},
+	"smirk":      {"face": "smirk"},
+	"mock":       {"face": "mock"},
+	"furious":    {"face": "furious"},
+	"scared":     {"face": "scared"},
+	"fright":     {"face": "fright"},
+	"terror":     {"face": "terror"},
+	"crying":     {"face": "crying"},
+	"sobbing":    {"face": "sobbing"},
+	"unease":     {"face": "unease"},
+	"tired":      {"face": "tired"},
+	"exhausted":  {"face": "exhausted"},
+	"sleepy":     {"face": "sleepy"},
+	"disgusted":  {"face": "disgusted"},
+	"nauseating": {"face": "nauseating"},
+	"kiss":       {"face": "kiss"},
+	"soulless":   {"face": "soulless"},
+	"psychotic":  {"face": "psychotic"},
+	"stoic":      {"face": "stoic"},
 }
 @export var layer_paths: Dictionary = {
 	"center": {
 		"body": {"base": "res://assets/立绘/clara/layers/center/body/base.png"},
 		"hair_back": {"base": "res://assets/立绘/clara/layers/center/hair_back/base.png"},
-		"hair_under": {"base": "res://assets/立绘/clara/layers/center/hair_under/base.png"},
-		"head": {"base": "res://assets/立绘/clara/layers/center/head/base.png"},
 		"hair_side": {"base": "res://assets/立绘/clara/layers/center/hair_side/base.png"},
 		"ear": {"base": "res://assets/立绘/clara/layers/center/ear/base.png"},
-		"inner": {"shirt_01": "res://assets/立绘/clara/layers/center/inner/shirt_01.png"},
 		"outer": {"coat_01": "res://assets/立绘/clara/layers/center/outer/coat_01.png"},
-		"vest": {"school_vest": "res://assets/立绘/clara/layers/center/vest/school_vest.png"},
-		"face_overlay": {
-			"neutral": "res://assets/立绘/clara/layers/center/face_overlay/neutral.png",
-			"smile": "res://assets/立绘/clara/layers/center/face_overlay/smile.png",
-			"angry": "res://assets/立绘/clara/layers/center/face_overlay/angry.png"
+		"face": {
+			"angry": "res://assets/立绘/clara/layers/center/face/angry.png",
+			"blush": "res://assets/立绘/clara/layers/center/face/blush.png",
+			"confident": "res://assets/立绘/clara/layers/center/face/confident.png",
+			"confused": "res://assets/立绘/clara/layers/center/face/confused.png",
+			"crying": "res://assets/立绘/clara/layers/center/face/crying.png",
+			"disgusted": "res://assets/立绘/clara/layers/center/face/disgusted.png",
+			"embarrassed": "res://assets/立绘/clara/layers/center/face/embarrassed.png",
+			"exhausted": "res://assets/立绘/clara/layers/center/face/exhausted.png",
+			"fright": "res://assets/立绘/clara/layers/center/face/fright.png",
+			"furious": "res://assets/立绘/clara/layers/center/face/furious.png",
+			"happy": "res://assets/立绘/clara/layers/center/face/happy.png",
+			"kiss": "res://assets/立绘/clara/layers/center/face/kiss.png",
+			"mock": "res://assets/立绘/clara/layers/center/face/mock.png",
+			"nauseating": "res://assets/立绘/clara/layers/center/face/nauseating.png",
+			"neutral": "res://assets/立绘/clara/layers/center/face/neutral.png",
+			"psychotic": "res://assets/立绘/clara/layers/center/face/psychotic.png",
+			"sad": "res://assets/立绘/clara/layers/center/face/sad.png",
+			"scared": "res://assets/立绘/clara/layers/center/face/scared.png",
+			"serious": "res://assets/立绘/clara/layers/center/face/serious.png",
+			"sleepy": "res://assets/立绘/clara/layers/center/face/sleepy.png",
+			"smirk": "res://assets/立绘/clara/layers/center/face/smirk.png",
+			"sobbing": "res://assets/立绘/clara/layers/center/face/sobbing.png",
+			"soulless": "res://assets/立绘/clara/layers/center/face/soulless.png",
+			"stoic": "res://assets/立绘/clara/layers/center/face/stoic.png",
+			"surprised": "res://assets/立绘/clara/layers/center/face/surprised.png",
+			"terror": "res://assets/立绘/clara/layers/center/face/terror.png",
+			"tired": "res://assets/立绘/clara/layers/center/face/tired.png",
+			"unease": "res://assets/立绘/clara/layers/center/face/unease.png"
 		},
 		"hair_front": {"base": "res://assets/立绘/clara/layers/center/hair_front/base.png"},
-		"hair_top": {"base": "res://assets/立绘/clara/layers/center/hair_top/base.png"},
-		"accessory": {
-			"ribbon": "res://assets/立绘/clara/layers/center/accessory/ribbon.png",
-			"jewelry": "res://assets/立绘/clara/layers/center/accessory/jewelry.png"
-		}
+		"hair_top": {"base": "res://assets/立绘/clara/layers/center/hair_top/base.png"}
 	},
 	"left": {
 		"body": {"base": "res://assets/立绘/clara/layers/left/body/base.png"},
 		"hair_back": {"base": "res://assets/立绘/clara/layers/left/hair_back/base.png"},
-		"hair_under": {"base": "res://assets/立绘/clara/layers/left/hair_under/base.png"},
-		"head": {"base": "res://assets/立绘/clara/layers/left/head/base.png"},
 		"hair_side": {"base": "res://assets/立绘/clara/layers/left/hair_side/base.png"},
 		"ear": {"base": "res://assets/立绘/clara/layers/left/ear/base.png"},
-		"inner": {"shirt_01": "res://assets/立绘/clara/layers/left/inner/shirt_01.png"},
 		"outer": {"coat_01": "res://assets/立绘/clara/layers/left/outer/coat_01.png"},
-		"vest": {"school_vest": "res://assets/立绘/clara/layers/left/vest/school_vest.png"},
-		"face_overlay": {
-			"neutral": "res://assets/立绘/clara/layers/left/face_overlay/neutral.png",
-			"smile": "res://assets/立绘/clara/layers/left/face_overlay/smile.png",
-			"angry": "res://assets/立绘/clara/layers/left/face_overlay/angry.png"
+		"face": {
+			"angry": "res://assets/立绘/clara/layers/left/face/angry.png",
+			"blush": "res://assets/立绘/clara/layers/left/face/blush.png",
+			"confident": "res://assets/立绘/clara/layers/left/face/confident.png",
+			"confused": "res://assets/立绘/clara/layers/left/face/confused.png",
+			"crying": "res://assets/立绘/clara/layers/left/face/crying.png",
+			"disgusted": "res://assets/立绘/clara/layers/left/face/disgusted.png",
+			"embarrassed": "res://assets/立绘/clara/layers/left/face/embarrassed.png",
+			"exhausted": "res://assets/立绘/clara/layers/left/face/exhausted.png",
+			"fright": "res://assets/立绘/clara/layers/left/face/fright.png",
+			"furious": "res://assets/立绘/clara/layers/left/face/furious.png",
+			"happy": "res://assets/立绘/clara/layers/left/face/happy.png",
+			"kiss": "res://assets/立绘/clara/layers/left/face/kiss.png",
+			"mock": "res://assets/立绘/clara/layers/left/face/mock.png",
+			"nauseating": "res://assets/立绘/clara/layers/left/face/nauseating.png",
+			"neutral": "res://assets/立绘/clara/layers/left/face/neutral.png",
+			"psychotic": "res://assets/立绘/clara/layers/left/face/psychotic.png",
+			"sad": "res://assets/立绘/clara/layers/left/face/sad.png",
+			"scared": "res://assets/立绘/clara/layers/left/face/scared.png",
+			"serious": "res://assets/立绘/clara/layers/left/face/serious.png",
+			"sleepy": "res://assets/立绘/clara/layers/left/face/sleepy.png",
+			"smirk": "res://assets/立绘/clara/layers/left/face/smirk.png",
+			"sobbing": "res://assets/立绘/clara/layers/left/face/sobbing.png",
+			"soulless": "res://assets/立绘/clara/layers/left/face/soulless.png",
+			"stoic": "res://assets/立绘/clara/layers/left/face/stoic.png",
+			"surprised": "res://assets/立绘/clara/layers/left/face/surprised.png",
+			"terror": "res://assets/立绘/clara/layers/left/face/terror.png",
+			"tired": "res://assets/立绘/clara/layers/left/face/tired.png",
+			"unease": "res://assets/立绘/clara/layers/left/face/unease.png"
 		},
 		"hair_front": {"base": "res://assets/立绘/clara/layers/left/hair_front/base.png"},
-		"hair_top": {"base": "res://assets/立绘/clara/layers/left/hair_top/base.png"},
-		"accessory": {
-			"ribbon": "res://assets/立绘/clara/layers/left/accessory/ribbon.png",
-			"jewelry": "res://assets/立绘/clara/layers/left/accessory/jewelry.png"
-		}
+		"hair_top": {"base": "res://assets/立绘/clara/layers/left/hair_top/base.png"}
 	},
 	"right": {
 		"body": {"base": "res://assets/立绘/clara/layers/right/body/base.png"},
 		"hair_back": {"base": "res://assets/立绘/clara/layers/right/hair_back/base.png"},
-		"hair_under": {"base": "res://assets/立绘/clara/layers/right/hair_under/base.png"},
-		"head": {"base": "res://assets/立绘/clara/layers/right/head/base.png"},
 		"hair_side": {"base": "res://assets/立绘/clara/layers/right/hair_side/base.png"},
 		"ear": {"base": "res://assets/立绘/clara/layers/right/ear/base.png"},
-		"inner": {"shirt_01": "res://assets/立绘/clara/layers/right/inner/shirt_01.png"},
 		"outer": {"coat_01": "res://assets/立绘/clara/layers/right/outer/coat_01.png"},
-		"vest": {"school_vest": "res://assets/立绘/clara/layers/right/vest/school_vest.png"},
-		"face_overlay": {
-			"neutral": "res://assets/立绘/clara/layers/right/face_overlay/neutral.png",
-			"smile": "res://assets/立绘/clara/layers/right/face_overlay/smile.png",
-			"angry": "res://assets/立绘/clara/layers/right/face_overlay/angry.png"
+		"face": {
+			"angry": "res://assets/立绘/clara/layers/right/face/angry.png",
+			"blush": "res://assets/立绘/clara/layers/right/face/blush.png",
+			"confident": "res://assets/立绘/clara/layers/right/face/confident.png",
+			"confused": "res://assets/立绘/clara/layers/right/face/confused.png",
+			"crying": "res://assets/立绘/clara/layers/right/face/crying.png",
+			"disgusted": "res://assets/立绘/clara/layers/right/face/disgusted.png",
+			"embarrassed": "res://assets/立绘/clara/layers/right/face/embarrassed.png",
+			"exhausted": "res://assets/立绘/clara/layers/right/face/exhausted.png",
+			"fright": "res://assets/立绘/clara/layers/right/face/fright.png",
+			"furious": "res://assets/立绘/clara/layers/right/face/furious.png",
+			"happy": "res://assets/立绘/clara/layers/right/face/happy.png",
+			"kiss": "res://assets/立绘/clara/layers/right/face/kiss.png",
+			"mock": "res://assets/立绘/clara/layers/right/face/mock.png",
+			"nauseating": "res://assets/立绘/clara/layers/right/face/nauseating.png",
+			"neutral": "res://assets/立绘/clara/layers/right/face/neutral.png",
+			"psychotic": "res://assets/立绘/clara/layers/right/face/psychotic.png",
+			"sad": "res://assets/立绘/clara/layers/right/face/sad.png",
+			"scared": "res://assets/立绘/clara/layers/right/face/scared.png",
+			"serious": "res://assets/立绘/clara/layers/right/face/serious.png",
+			"sleepy": "res://assets/立绘/clara/layers/right/face/sleepy.png",
+			"smirk": "res://assets/立绘/clara/layers/right/face/smirk.png",
+			"sobbing": "res://assets/立绘/clara/layers/right/face/sobbing.png",
+			"soulless": "res://assets/立绘/clara/layers/right/face/soulless.png",
+			"stoic": "res://assets/立绘/clara/layers/right/face/stoic.png",
+			"surprised": "res://assets/立绘/clara/layers/right/face/surprised.png",
+			"terror": "res://assets/立绘/clara/layers/right/face/terror.png",
+			"tired": "res://assets/立绘/clara/layers/right/face/tired.png",
+			"unease": "res://assets/立绘/clara/layers/right/face/unease.png"
 		},
 		"hair_front": {"base": "res://assets/立绘/clara/layers/right/hair_front/base.png"},
-		"hair_top": {"base": "res://assets/立绘/clara/layers/right/hair_top/base.png"},
-		"accessory": {
-			"ribbon": "res://assets/立绘/clara/layers/right/accessory/ribbon.png",
-			"jewelry": "res://assets/立绘/clara/layers/right/accessory/jewelry.png"
-		}
+		"hair_top": {"base": "res://assets/立绘/clara/layers/right/hair_top/base.png"}
 	}
 }
 @export var conflict_rules: Array[Dictionary] = []
 
 
-func get_preset(preset_id: String) -> Dictionary:
-	var preset_value: Variant = presets.get(preset_id, {})
-	if preset_value is Dictionary:
-		return (preset_value as Dictionary).duplicate(true)
-	push_warning("ClaraPortraitDB: 预设 '%s' 未找到" % preset_id)
+func get_direction_preset(preset_id: String) -> Dictionary:
+	var val: Variant = direction_presets.get(preset_id, {})
+	if val is Dictionary:
+		return (val as Dictionary).duplicate(true)
+	return {}
+
+
+func get_body_preset(preset_id: String) -> Dictionary:
+	var val: Variant = body_presets.get(preset_id, {})
+	if val is Dictionary:
+		return (val as Dictionary).duplicate(true)
 	return {}
 
 
