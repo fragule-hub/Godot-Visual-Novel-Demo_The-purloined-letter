@@ -91,12 +91,11 @@ func change_actor_state(actor_id: String, state_id: String, state_tex: Texture) 
 	# 复合立绘（Clara）：通过 fade_apply_state 切换
 	if actor_node is CompositePortraitActor:
 		actor_node.fade_apply_state(state_id)
+	# 简单立绘：通过 fade_set_character_texture 交叉溶解
+	elif actor_node is SimplePortraitActor and state_tex != null:
+		actor_node.fade_set_character_texture(state_tex)
 	else:
-		# 简单立绘：通过 fade_set_character_texture 交叉溶解
-		if actor_node.has_method("fade_set_character_texture") and state_tex != null:
-			actor_node.call("fade_set_character_texture", state_tex)
-		else:
-			actor_node.set_character_texture(state_tex)
+		actor_node.set_character_texture(state_tex)
 
 	character_state_changed.emit()
 	print("切换 " + actor_id + " 到 " + state_id + " 状态")

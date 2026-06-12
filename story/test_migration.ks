@@ -4,6 +4,56 @@
 background test_room fade
 
 
+# ================================================================
+# ⚡ 快速测试区：交叉溶解 / 内联命令（放在开头方便测试）
+# ================================================================
+actor show Clara preset:dir_center|preset:body_casual|face=neutral at 3
+
+# --- 内联 change 交叉溶解 ---
+"Clara" "内联表情切换：{change:Clara,face=happy}开心！{change:Clara,face=angry}生气了！{change:Clara,face=surprised}惊讶！{change:Clara,face=neutral}恢复。"
+
+"Clara" "内联换装：{change:Clara,preset:body_coat}穿上外套了。{change:Clara,preset:body_casual}换回来了。"
+
+"Clara" "内联全组合：{change:Clara,preset:dir_left|preset:body_coat|face=surprised}左向外套惊讶！"
+
+actor change Clara preset:dir_center|preset:body_casual|face=neutral
+
+# --- 快速连续切换 ---
+"Clara" "快速连续切换测试："
+
+actor change Clara face=happy
+"Clara" "happy。"
+actor change Clara face=angry
+"Clara" "angry。"
+actor change Clara face=surprised
+"Clara" "surprised。"
+actor change Clara face=sad
+"Clara" "sad。"
+actor change Clara face=neutral
+"Clara" "快速切换测试完毕。"
+
+# --- bounce + change 组合 ---
+"Clara" "跳动加换表情：{bounce:Clara,2}{change:Clara,face=angry}跳完就生气！"
+
+# --- Eve 简单立绘交叉溶解 ---
+actor show Eve neutral at 2
+"Eve" "Eve 快速切换："
+actor change Eve angry
+"Eve" "angry。"
+actor change Eve smile
+"Eve" "smile。"
+actor change Eve shy
+"Eve" "shy。"
+actor exit Eve
+
+actor change Clara preset:dir_center|preset:body_casual|face=neutral
+"Clara" "快速测试区完成。接下来是完整表情遍历。"
+actor exit Clara
+
+
+# ================================================================
+# 完整测试区（以下为原测试内容）
+# ================================================================
 
 # ================================================================
 # 左向表情测试

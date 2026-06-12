@@ -12,6 +12,7 @@ var _overlay_rect: TextureRect
 
 var _old_vp: SubViewport
 var _transition_tween: Tween
+var _pending_free_vps: Array[SubViewport] = []
 
 var layout_config: Dictionary = {}
 
@@ -111,10 +112,25 @@ func fade_apply_state(state_text: String) -> void:
 		apply_state(state_text)
 		return
 
-	# 1. 冻结旧 VP
+	# 1. 终止进行中的交叉溶解
+	if _transition_tween and _transition_tween.is_valid():
+		_transition_tween.kill()
+
+	# 2. 清理残留 overlay
+	_cleanup_crossfade()
+
+	# 3. 旧 VP 延迟释放：入队而非立即 free（_texture_rect 仍在引用其纹理）
+	if _old_vp:
+		_pending_free_vps.append(_old_vp)
+		_old_vp = null
+
+	# 4. 恢复 _texture_rect 不透明度（不切换纹理，避免指向未渲染 VP）
+	_texture_rect.modulate.a = 1.0
+
+	# 5. 冻结当前 VP
 	_old_vp = _vp
 
-	# 2. 创建新 VP，渲染新状态
+	# 6. 创建新 VP 并渲染目标状态
 	var new_vp := SubViewport.new()
 	new_vp.transparent_bg = true
 	new_vp.size = _old_vp.size
@@ -125,7 +141,7 @@ func fade_apply_state(state_text: String) -> void:
 	apply_state(state_text)
 	_render_frame_to_viewport(_vp)
 
-	# 3. 覆盖层（新纹理，alpha 从 0 开始）
+	# 7. 覆盖层（alpha=0 不可见；首帧纹理未渲染时不会产生白块）
 	_overlay_rect = TextureRect.new()
 	_overlay_rect.name = "OverlayRect"
 	_overlay_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -137,9 +153,7 @@ func fade_apply_state(state_text: String) -> void:
 	_overlay_rect.modulate.a = 0.0
 	slot.add_child(_overlay_rect)
 
-	# 4. 并行 alpha 渐变
-	if _transition_tween and _transition_tween.is_valid():
-		_transition_tween.kill()
+	# 8. 并行 alpha 渐变
 	_transition_tween = create_tween()
 	_transition_tween.set_parallel(true)
 	_transition_tween.tween_property(_texture_rect, "modulate:a", 0.0, animation_time)
@@ -147,16 +161,24 @@ func fade_apply_state(state_text: String) -> void:
 	_transition_tween.finished.connect(_on_crossfade_finished)
 
 
+func _cleanup_crossfade() -> void:
+	if _overlay_rect:
+		_overlay_rect.modulate.a = 0.0
+		_overlay_rect.queue_free()
+		_overlay_rect = null
+
+
 func _on_crossfade_finished() -> void:
 	_texture_rect.texture = _vp.get_texture()
 	_texture_rect.modulate.a = 1.0
-
-	if _overlay_rect:
-		_overlay_rect.queue_free()
-		_overlay_rect = null
+	# 释放旧 VP：此时 _texture_rect 已切换至新纹理，旧 VP 安全销毁
 	if _old_vp:
 		_old_vp.queue_free()
 		_old_vp = null
+	for vp in _pending_free_vps:
+		vp.queue_free()
+	_pending_free_vps.clear()
+	_cleanup_crossfade()
 
 
 # ============================================================
