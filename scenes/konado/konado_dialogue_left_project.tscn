@@ -146,6 +146,12 @@ theme_type_variation = &"FlatButton"
 text = "成就"
 flat = true
 
+[node name="Review" type="Button" parent="KonadoUI/ColorRect/HBoxContainer"]
+layout_mode = 2
+theme_type_variation = &"FlatButton"
+text = "回顾"
+flat = true
+
 [node name="Settings" type="Button" parent="KonadoUI/ColorRect/HBoxContainer" unique_id=309343294]
 layout_mode = 2
 theme_type_variation = &"FlatButton"
