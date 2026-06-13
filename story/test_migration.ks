@@ -1,13 +1,48 @@
 # 迁移测试剧本
 # 测试 Clara 组合立绘系统（面部预设 + 3重预设 + 内联命令）
+# h_division=3: at 1=左, at 2=中, at 3=右
 
 background test_room fade
 
 
 # ================================================================
-# ⚡ 快速测试区：交叉溶解 / 内联命令（放在开头方便测试）
+# ⚡ 快速测试区：双人场景 + 交叉溶解 / 内联命令（放在开头方便测试）
 # ================================================================
-actor show Clara preset:dir_center|preset:body_casual|face=neutral at 3
+
+# --- 双人场景：左+右 ---
+actor show Clara preset:dir_left|preset:body_casual|face=neutral at 1
+actor show Eve neutral at 3
+
+"Clara" "双人测试——左右站位。"
+"Eve" "没问题，我已就位。"
+
+actor exit Clara
+actor exit Eve
+
+# --- 双人场景：左+中 ---
+actor show Clara preset:dir_left|preset:body_casual|face=neutral at 1
+actor show Eve neutral at 2
+
+"Clara" "一左一中的布局。"
+"Eve" "收到。"
+
+actor exit Clara
+actor exit Eve
+
+# --- 双人场景：中+右 ---
+actor show Eve neutral at 2
+actor show Clara preset:dir_right|preset:body_casual|face=neutral at 3
+
+"Eve" "这次我在中间。"
+"Clara" "我在右侧。"
+
+actor exit Clara
+actor exit Eve
+
+# ================================================================
+# 内联命令 + 快速切换测试
+# ================================================================
+actor show Clara preset:dir_center|preset:body_casual|face=neutral at 2
 
 # --- 内联 change 交叉溶解 ---
 "Clara" "内联表情切换：{change:Clara,face=happy}开心！{change:Clara,face=angry}生气了！{change:Clara,face=surprised}惊讶！{change:Clara,face=neutral}恢复。"
@@ -35,7 +70,7 @@ actor change Clara face=neutral
 # --- bounce + change 组合 ---
 "Clara" "跳动加换表情：{bounce:Clara,2}{change:Clara,face=angry}跳完就生气！"
 
-# --- Eve 简单立绘交叉溶解 ---
+# --- Eve 简单立绘快速切换 ---
 actor show Eve neutral at 2
 "Eve" "Eve 快速切换："
 actor change Eve angry
@@ -58,7 +93,52 @@ actor exit Clara
 # ================================================================
 # 左向表情测试
 # ================================================================
-actor show Clara preset:dir_left|face=neutral at 3
+actor show Clara preset:dir_left|face=neutral at 1
+
+"Clara" "左向表情测试开始。这是 neutral。"
+
+actor change Clara preset:dir_left|face=happy
+"Clara" "左向 happy。{bounce:Clara,1}"
+
+actor change Clara preset:dir_left|face=angry
+"Clara" "左向 angry。"
+
+actor change Clara preset:dir_left|face=sad
+"Clara" "左向 sad。"
+
+actor change Clara preset:dir_left|face=surprised
+"Clara" "左向 surprised。"
+
+actor change Clara preset:dir_left|face=confused
+"Clara" "左向 confused。"
+
+actor change Clara preset:dir_left|face=serious
+"Clara" "左向 serious。"
+
+actor change Clara preset:dir_left|face=smirk
+"Clara" "左向 smirk。"
+
+actor change Clara preset:dir_left|face=blush
+"Clara" "左向 blush。"
+
+actor change Clara preset:dir_left|face=embarrassed
+"Clara" "左向 embarrassed。"
+
+actor change Clara preset:dir_left|face=furious
+"Clara" "左向 furious！{bounce:Clara,2}"
+
+actor change Clara preset:dir_left|face=crying
+"Clara" "左向 crying……"
+
+actor change Clara preset:dir_left|face=kiss
+"Clara" "左向 kiss。"
+
+actor change Clara preset:dir_left|face=psychotic
+"Clara" "左向 psychotic。"
+
+actor change Clara preset:dir_left|face=neutral
+"Clara" "左向 14 种表情测试完毕。"
+
 
 # ================================================================
 # 右向表情测试
@@ -105,51 +185,6 @@ actor change Clara preset:dir_right|face=stoic
 
 actor change Clara preset:dir_right|face=neutral
 "Clara" "右向 13 种表情测试完毕。"
-
-"Clara" "左向表情测试开始。这是 neutral。"
-
-actor change Clara preset:dir_left|face=happy
-"Clara" "左向 happy。{bounce:Clara,1}"
-
-actor change Clara preset:dir_left|face=angry
-"Clara" "左向 angry。"
-
-actor change Clara preset:dir_left|face=sad
-"Clara" "左向 sad。"
-
-actor change Clara preset:dir_left|face=surprised
-"Clara" "左向 surprised。"
-
-actor change Clara preset:dir_left|face=confused
-"Clara" "左向 confused。"
-
-actor change Clara preset:dir_left|face=serious
-"Clara" "左向 serious。"
-
-actor change Clara preset:dir_left|face=smirk
-"Clara" "左向 smirk。"
-
-actor change Clara preset:dir_left|face=blush
-"Clara" "左向 blush。"
-
-actor change Clara preset:dir_left|face=embarrassed
-"Clara" "左向 embarrassed。"
-
-actor change Clara preset:dir_left|face=furious
-"Clara" "左向 furious！{bounce:Clara,2}"
-
-actor change Clara preset:dir_left|face=crying
-"Clara" "左向 crying……"
-
-actor change Clara preset:dir_left|face=kiss
-"Clara" "左向 kiss。"
-
-actor change Clara preset:dir_left|face=psychotic
-"Clara" "左向 psychotic。"
-
-actor change Clara preset:dir_left|face=neutral
-"Clara" "左向 14 种表情测试完毕。"
-
 
 
 # ================================================================
@@ -251,13 +286,13 @@ actor change Eve shy
 actor exit Eve
 
 # ================================================================
-# 双人场景
+# 双人场景（结尾汇总）
 # ================================================================
-actor show Clara preset:dir_center|preset:body_casual|face=neutral at 3
-actor show Eve neutral at 2
+actor show Clara preset:dir_center|preset:body_casual|face=neutral at 2
+actor show Eve neutral at 3
 
-"Clara" "Eve，双人测试。"
-"Eve" "没问题，开始吧。"
+"Clara" "Eve，最终双人测试。"
+"Eve" "一切正常，收工。"
 
 actor exit Clara
 actor exit Eve

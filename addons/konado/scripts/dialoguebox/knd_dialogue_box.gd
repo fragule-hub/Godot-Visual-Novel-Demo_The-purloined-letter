@@ -58,7 +58,8 @@ signal on_dialogue_hide_completed
 @export var audio_volumn: float = 0.6         ## 音效音量(0-1)
 
 @export_group("对话框设置")
-@export var dialogue_margins: int = 100     ## 对话框到底部距离
+@export var dialogue_margins: int = 100     ## 对话框左右边距
+@export var dialogue_margin_bottom: int = 100  ## 对话框底部边距
 @export var dialogue_bg: StyleBox          ## 对话框背景
 @export var dialogue_color: Color = Color.WHITE ## 对话文字颜色
 @export var dialogue_height: int = 200  ## 对话文本框高度
@@ -223,7 +224,7 @@ func update_dialogue_box_height() -> void:
 	# 更改边距
 	dialogue_container.add_theme_constant_override("margin_left", dialogue_margins)
 	dialogue_container.add_theme_constant_override("margin_right",dialogue_margins)
-	dialogue_container.add_theme_constant_override("margin_bottom",dialogue_margins)
+	dialogue_container.add_theme_constant_override("margin_bottom",dialogue_margin_bottom)
 	# 如果用户选择了背景
 	if dialogue_bg:
 		dialogue_box_bg.add_theme_stylebox_override("panel",dialogue_bg)

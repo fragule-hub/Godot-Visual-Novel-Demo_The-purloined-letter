@@ -231,8 +231,8 @@ func _on_resized() -> void:
 		return
 
 	var target_x: float = (
-		-effective_w / float(safe_division) * float(safe_division - h_character_position)
-		+ effective_w / 2.0
+		effective_w / float(safe_division + 1) * float(h_character_position)
+		- effective_w / 2.0
 	)
 
 	if use_tween and is_inside_tree():

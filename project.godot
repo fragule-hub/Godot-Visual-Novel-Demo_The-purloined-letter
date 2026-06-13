@@ -27,6 +27,10 @@ window/stretch/mode="canvas_items"
 
 enabled=PackedStringArray("res://addons/konado/plugin.cfg")
 
+[gui]
+
+theme/custom_font="uid://h5rf1ksepgmu"
+
 [input]
 
 backlog={
