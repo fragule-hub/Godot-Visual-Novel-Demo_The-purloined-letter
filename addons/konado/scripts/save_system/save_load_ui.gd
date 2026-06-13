@@ -3,6 +3,9 @@ class_name SaveLoadUI
 
 ## 存读档界面
 
+signal opened
+signal closed
+
 @export var save_componect: PackedScene = preload("res://addons/konado/template/ui_template/save_commponect/save_componect.tscn")
 
 @export var root_container: BoxContainer
@@ -14,6 +17,9 @@ class_name SaveLoadUI
 
 ## 存档组件列表
 var save_components: Array[SaveComponent] = []
+
+## 内容容器（用于判断点击是否在面板外）
+@onready var _content_container: MarginContainer = $MarginContainer
 
 func _ready() -> void:
 	_create_save_slot()
@@ -67,8 +73,19 @@ func open_save_ui() -> void:
 	update_all_save_info()
 	# 显示界面
 	visible = true
+	opened.emit()
 
 ## 关闭存档界面
 func close_save_ui() -> void:
 	# 隐藏界面
 	visible = false
+	closed.emit()
+
+func _input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var content_rect: Rect2 = _content_container.get_global_rect()
+		if not content_rect.has_point(event.position):
+			close_save_ui()
+			get_viewport().set_input_as_handled()

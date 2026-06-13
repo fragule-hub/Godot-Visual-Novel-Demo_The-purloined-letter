@@ -45,6 +45,10 @@ signal dialogue_text_ready(content: String, character_id: String)
 
 ## 自动播放
 @export var autoplay: bool = false
+## 自动播放暂停守卫（面板打开时置 true，start_autoplay 会记录但不启动计时）
+var _autoplay_paused := false
+## 暂停前的原始值（null = 未暂停，true/false = 暂停前的状态）
+var _autoplay_original: Variant = null
 ## 对话打字播放速度
 @export var _typing_interval: float = 0.04
 ## 自动播放速度
@@ -606,34 +610,34 @@ func _process(delta) -> void:
 ## 打字完成回调
 func isfinishtyping(wait_voice: bool, wait_voice_time: float) -> void:
 	_dialogue_goto_state(DialogState.PAUSED)
-	if autoplay:
-		if wait_voice:
-			print("等待音频播放完成")
-			# 创建计时器
-			var timer = get_tree().create_timer(wait_voice_time)
-			timer.timeout.connect(
-				func():
-					_process_next()
-					)
-		else:
-			await get_tree().create_timer(autoplayspeed).timeout
-			_process_next()
-			print("触发打字完成信号")
-	else:
+	# 非自动播放时：仅处理选项自动推进
+	if not autoplay:
 		var current = _current_dialogue()
-		if current == null:
-			print("当前对话为空，无法获取下一句")
-			return
-		
-		var next_id = current.next_id
-		# 检查下一句是否是选项，如果是自动下一句
-		var nd: KND_Dialogue = cur_dialogue_shot.find_node(next_id)
-		if nd != null and nd.dialog_type == KND_Dialogue.Type.SHOW_CHOICE:
-			print("选项自动下一个")
-			await get_tree().create_timer(0.05).timeout
+		if current != null:
+			var next_id = current.next_id
+			var nd: KND_Dialogue = cur_dialogue_shot.find_node(next_id)
+			if nd != null and nd.dialog_type == KND_Dialogue.Type.SHOW_CHOICE:
+				print("选项自动下一个")
+				await get_tree().create_timer(0.05).timeout
+				_process_next()
+		print("触发打字完成信号")
+		return
+	# 自动播放：timer 回调需守卫（面板可能在等待期间关闭自动播放）
+	if wait_voice:
+		print("等待音频播放完成")
+		var timer = get_tree().create_timer(wait_voice_time)
+		timer.timeout.connect(_on_autoplay_timer_timeout)
+	else:
+		await get_tree().create_timer(autoplayspeed).timeout
+		if autoplay:
 			_process_next()
 		print("触发打字完成信号")
-	
+
+func _on_autoplay_timer_timeout() -> void:
+	if not autoplay:
+		return
+	_process_next()
+
 ## 处理下一个，绑定到下一个按钮
 func _process_next() -> void:
 	dialogue_line_end.emit(cur_node_id)
@@ -701,16 +705,24 @@ func _goto_next_node() -> void:
 	print("导航到节点: %s" % cur_node_id)
 			
 ## 开始自动播放的方法
-func start_autoplay(value: bool):
+func start_autoplay(value: bool) -> void:
+	# 暂停守卫：面板打开期间，记录用户意图但不启动计时。
+	# _autoplay_original 由 _pause_autoplay 在面板打开时保存。
+	if _autoplay_paused:
+		autoplay = value
+		if value:
+			_autoPlayButton.set_text("停止播放")
+		else:
+			_autoPlayButton.set_text("自动播放")
+		return
 	autoplay = value
 	if value:
 		_autoPlayButton.set_text("停止播放")
+		await get_tree().process_frame
+		if autoplay:
+			_process_next()
 	else:
 		_autoPlayButton.set_text("自动播放")
-	await get_tree().process_frame
-	if autoplay or dialogueState != DialogState.OFF:
-		_process_next()
-	
 	
 	
 ## 显示背景的方法

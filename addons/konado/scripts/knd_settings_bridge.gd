@@ -13,8 +13,15 @@ class_name KND_SettingsBridge
 ## @param value: 新的设置值
 signal setting_changed(category: String, key: String, value: Variant)
 
+## 设置面板状态信号
+signal settings_panel_opened
+signal settings_panel_closed
+
 ## 设置管理器引用（动态获取）
 var _settings_manager: Node = null
+
+## 设置面板实例（复用）
+var _settings_panel: CanvasLayer = null
 
 ## 缓存的设置值，用于快速访问
 var _cached_settings: Dictionary = {}
@@ -157,7 +164,20 @@ func show_settings_panel() -> void:
 	if not ResourceLoader.exists(load_path):
 		printerr("未安装Konado Settings")
 		return
-	var settings_panel = load(load_path).instantiate()
-	add_child(settings_panel)
-	# 显示设置面板
-	settings_panel.show()
+	if _settings_panel == null:
+		_settings_panel = load(load_path).instantiate()
+		add_child(_settings_panel)
+		var close_btn: Button = _settings_panel.get_node_or_null(
+			"PanelContainer/MarginContainer/VBoxContainer/HBoxContainer/Close")
+		if close_btn:
+			close_btn.pressed.connect(_on_settings_panel_closed)
+	_settings_panel.show()
+	settings_panel_opened.emit()
+
+func _on_settings_panel_closed() -> void:
+	settings_panel_closed.emit()
+
+func close_settings_panel() -> void:
+	if _settings_panel:
+		_settings_panel.hide()
+		settings_panel_closed.emit()

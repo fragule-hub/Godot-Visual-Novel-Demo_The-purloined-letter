@@ -6,19 +6,19 @@
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_btn"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_separator"]
-bg_color = Color(0.68, 0.5, 0.17, 0.4)
+bg_color = Color(0.30, 0.60, 0.68, 0.40)
 
 [resource]
 default_font = ExtResource("1_font")
 default_font_size = 36
-Button/colors/font_color = Color(0.97, 0.96, 0.91, 1)
-Button/colors/font_hover_color = Color(0.964, 0.767, 0.404, 1)
-Button/colors/font_pressed_color = Color(0.964, 0.767, 0.404, 1)
+Button/colors/font_color = Color(0.75, 0.85, 0.88, 1)
+Button/colors/font_hover_color = Color(0.40, 0.80, 0.88, 1)
+Button/colors/font_pressed_color = Color(0.40, 0.80, 0.88, 1)
 Button/styles/focus = SubResource("StyleBoxEmpty_btn")
 Button/styles/hover = SubResource("StyleBoxEmpty_btn")
 Button/styles/normal = SubResource("StyleBoxEmpty_btn")
 Button/styles/pressed = SubResource("StyleBoxEmpty_btn")
 HSeparator/styles/separator = SubResource("StyleBoxFlat_separator")
-Label/colors/font_color = Color(0.97, 0.96, 0.91, 1)
+Label/colors/font_color = Color(0.85, 0.92, 0.94, 1)
 PanelContainer/styles/panel = ExtResource("2_panel_bg")
-RichTextLabel/colors/default_color = Color(0.97, 0.96, 0.91, 1)
+RichTextLabel/colors/default_color = Color(0.85, 0.92, 0.94, 1)

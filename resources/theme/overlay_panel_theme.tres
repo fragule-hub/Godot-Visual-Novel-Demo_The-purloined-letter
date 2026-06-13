@@ -1,0 +1,7 @@
+[gd_resource type="Theme" format=3 uid="uid://6jfuws1apj0f"]
+
+[ext_resource type="FontFile" uid="uid://dihv3p6n7pp2e" path="res://addons/konado/fonts/ResourceHanRoundedCN-Medium.ttf" id="1_font"]
+
+[resource]
+default_font = ExtResource("1_font")
+default_font_size = 36
