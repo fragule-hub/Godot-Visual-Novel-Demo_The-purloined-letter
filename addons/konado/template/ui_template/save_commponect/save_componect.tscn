@@ -56,6 +56,7 @@ offset_top = -184.0
 offset_right = 658.0
 offset_bottom = -119.0
 grow_vertical = 0
+theme_override_font_sizes/font_size = 28
 text = "存档"
 label_settings = SubResource("LabelSettings_kt3kp")
 vertical_alignment = 1
@@ -71,6 +72,7 @@ offset_top = -107.0
 offset_right = 675.0
 offset_bottom = -66.0
 grow_vertical = 0
+theme_override_font_sizes/font_size = 24
 text = "2025/8/25/12:02"
 vertical_alignment = 1
 
@@ -85,6 +87,7 @@ offset_top = -66.0
 offset_right = 675.0
 offset_bottom = -25.0
 grow_vertical = 0
+theme_override_font_sizes/font_size = 24
 text = " 3h 2min"
 vertical_alignment = 1
 

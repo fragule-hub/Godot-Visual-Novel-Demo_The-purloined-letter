@@ -1,14 +1,14 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://cylm4rxfdj26q"]
 
-[ext_resource type="Script" path="res://scripts/ui/project_settings_panel.gd" id="1_script"]
-[ext_resource type="Theme" path="res://resources/theme/overlay_panel_theme.tres" id="2_theme"]
-[ext_resource type="StyleBoxFlat" path="res://resources/theme/backlog_panel_bg.tres" id="3_panel_bg"]
-[ext_resource type="LabelSettings" path="res://resources/theme/backlog_title_label.tres" id="4_title_label"]
-[ext_resource type="StyleBoxFlat" path="res://resources/theme/panel_separator.tres" id="5_separator"]
+[ext_resource type="Script" uid="uid://bgphhnmeurme3" path="res://scripts/ui/project_settings_panel.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://6jfuws1apj0f" path="res://resources/theme/overlay_panel_theme.tres" id="2_theme"]
+[ext_resource type="StyleBox" path="res://resources/theme/backlog_panel_bg.tres" id="3_panel_bg"]
+[ext_resource type="LabelSettings" uid="uid://yxtiltgt53te" path="res://resources/theme/backlog_title_label.tres" id="4_title_label"]
+[ext_resource type="StyleBox" path="res://resources/theme/panel_separator.tres" id="5_separator"]
 
-[node name="ProjectSettingsPanel" type="Control"]
+[node name="ProjectSettingsPanel" type="Control" unique_id=608151319]
 custom_minimum_size = Vector2(800, 600)
-layout_mode = 1
+layout_mode = 3
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -23,7 +23,7 @@ grow_vertical = 2
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=441330681]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -35,29 +35,29 @@ theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="PanelContainer" type="PanelContainer" parent="MarginContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer" unique_id=1560320511]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_styles/panel = ExtResource("3_panel_bg")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/PanelContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/PanelContainer" unique_id=2012815878]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="Label" type="Label" parent="MarginContainer/PanelContainer/VBoxContainer"]
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=2069048495]
 layout_mode = 2
-label_settings = ExtResource("4_title_label")
 text = "游戏设置"
+label_settings = ExtResource("4_title_label")
 horizontal_alignment = 1
 
-[node name="HSeparator" type="HSeparator" parent="MarginContainer/PanelContainer/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=1212641224]
 layout_mode = 2
 theme_override_styles/separator = ExtResource("5_separator")
 
-[node name="TabMargin" type="MarginContainer" parent="MarginContainer/PanelContainer/VBoxContainer"]
+[node name="TabMargin" type="MarginContainer" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=1347590684]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 10
@@ -65,31 +65,31 @@ theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 6
 
-[node name="TabContainer" type="TabContainer" parent="MarginContainer/PanelContainer/VBoxContainer/TabMargin"]
+[node name="TabContainer" type="TabContainer" parent="MarginContainer/PanelContainer/VBoxContainer/TabMargin" unique_id=602815796]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ButtonRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBoxContainer"]
+[node name="ButtonRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=2122127955]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="ResetBtn" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer/ButtonRow"]
+[node name="ResetBtn" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer/ButtonRow" unique_id=1730813027]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 25)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.75, 0.85, 0.88, 1)
-theme_override_colors/font_hover_color = Color(0.40, 0.80, 0.88, 1)
+theme_override_colors/font_hover_color = Color(0.4, 0.8, 0.88, 1)
 theme_override_font_sizes/font_size = 32
 text = "恢复默认"
 
-[node name="CloseBtn" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer/ButtonRow"]
+[node name="CloseBtn" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer/ButtonRow" unique_id=311699893]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 25)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.75, 0.85, 0.88, 1)
-theme_override_colors/font_hover_color = Color(0.40, 0.80, 0.88, 1)
+theme_override_colors/font_hover_color = Color(0.4, 0.8, 0.88, 1)
 theme_override_font_sizes/font_size = 32
 text = "关闭"

@@ -9,8 +9,8 @@
 [ext_resource type="Script" uid="uid://bpdmh056bgwg7" path="res://addons/konado/typewriter/typewriter_text.gd" id="7_q2m0a"]
 
 [sub_resource type="Gradient" id="Gradient_7xou3"]
-offsets = PackedFloat32Array(0.2, 1)
-colors = PackedColorArray(0.21599999, 0.25586668, 0.4, 0.8666667, 0.21599999, 0.25586668, 0.4, 0)
+offsets = PackedFloat32Array(0.3, 0.6, 1)
+colors = PackedColorArray(0.21568628, 0.25490198, 0.4, 0.9411765, 0.21568628, 0.25490198, 0.4, 0.7529412, 0.21599999, 0.25586668, 0.4, 0)
 metadata/_snap_enabled = true
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_faqv6"]

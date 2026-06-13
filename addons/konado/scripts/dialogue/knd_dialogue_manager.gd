@@ -43,16 +43,18 @@ signal dialogue_text_ready(content: String, character_id: String)
 ## 一般来说大部分场景可能需要打开能获得更好的效果
 @export var actor_auto_highlight: bool = true
 
-## 自动播放
-@export var autoplay: bool = false
-## 自动播放暂停守卫（面板打开时置 true，start_autoplay 会记录但不启动计时）
-var _autoplay_paused := false
-## 暂停前的原始值（null = 未暂停，true/false = 暂停前的状态）
-var _autoplay_original: Variant = null
+# === Auto-Play System (single source of truth) ===
+## 自动播放开关 — 场景按钮和设置面板都指向此唯一变量
+var _auto_play_enabled: bool = false
+## 自动播放延迟（秒）— 打字完成到自动推进下一句的等待时间
+var _auto_play_delay: float = 2.0
+## 面板打开计数（支持嵌套：设置面板里打开存档面板）
+var _panel_open_count: int = 0
+## 自动播放计时器代数（递增以"取消"旧 timer，避免 Godot 无 timer.cancel() 的问题）
+var _auto_play_timer_generation: int = 0
+
 ## 对话打字播放速度
 @export var _typing_interval: float = 0.04
-## 自动播放速度
-@export var autoplayspeed: float = 2
 
 
 @export_category("Global Variable")
@@ -155,7 +157,7 @@ var achievement_mgr: Node = null
 @export var _settings_bridge: KND_SettingsBridge
 
 
-## 设置变更处理
+## 设置变更处理（来自设置面板 → KND_Settings → KND_SettingsBridge）
 func _on_setting_changed(category: String, key: String, value: Variant) -> void:
 	match category:
 		"text":
@@ -163,9 +165,9 @@ func _on_setting_changed(category: String, key: String, value: Variant) -> void:
 				"text_speed":
 					_typing_interval = value
 				"auto_delay":
-					autoplayspeed = value
+					set_auto_play_delay(value)
 				"auto_mode":
-					start_autoplay(value)
+					set_auto_play(value)
 		"audio":
 			# 音频设置变更由 KND_AudioInterface 处理
 			pass
@@ -175,9 +177,9 @@ func _ready() -> void:
 	if _settings_bridge:
 		var auto = _settings_bridge.get_auto_mode()
 		var auto_delay = _settings_bridge.get_auto_delay()
-		autoplayspeed = auto_delay
+		set_auto_play_delay(auto_delay)
 		await get_tree().process_frame
-		start_autoplay(auto)
+		set_auto_play(auto)
 	if check_visable:
 		if not self.is_visible_in_tree():
 			printerr("对话已隐藏，不做任何操作")
@@ -209,7 +211,7 @@ func _ready() -> void:
 		push_error("未指定 _konado_dialogue_box")
 		
 	if _autoPlayButton:
-		_autoPlayButton.toggled.connect(start_autoplay)
+		_autoPlayButton.toggled.connect(_on_auto_play_button_toggled)
 	else:
 		push_error("未指定 _autoPlayButton")
 		
@@ -610,8 +612,13 @@ func _process(delta) -> void:
 ## 打字完成回调
 func isfinishtyping(wait_voice: bool, wait_voice_time: float) -> void:
 	_dialogue_goto_state(DialogState.PAUSED)
-	# 非自动播放时：仅处理选项自动推进
-	if not autoplay:
+	
+	# 面板打开时不推进
+	if _panel_open_count > 0:
+		return
+	
+	# 非自动播放：仅处理"下一句是选项"的自动推进
+	if not _auto_play_enabled:
 		var current = _current_dialogue()
 		if current != null:
 			var next_id = current.next_id
@@ -622,21 +629,96 @@ func isfinishtyping(wait_voice: bool, wait_voice_time: float) -> void:
 				_process_next()
 		print("触发打字完成信号")
 		return
-	# 自动播放：timer 回调需守卫（面板可能在等待期间关闭自动播放）
-	if wait_voice:
-		print("等待音频播放完成")
-		var timer = get_tree().create_timer(wait_voice_time)
-		timer.timeout.connect(_on_autoplay_timer_timeout)
-	else:
-		await get_tree().create_timer(autoplayspeed).timeout
-		if autoplay:
-			_process_next()
-		print("触发打字完成信号")
+	
+	# 自动播放：统一走 timer（配音用 voice 时长，否则用用户设置延迟）
+	var delay: float = wait_voice_time if wait_voice else _auto_play_delay
+	_start_auto_play_timer(delay)
+	print("触发打字完成信号")
 
-func _on_autoplay_timer_timeout() -> void:
-	if not autoplay:
+# ============================================================
+# Auto-Play System
+# ============================================================
+
+## 统一设置自动播放开关（单一入口，不写回 settings 以避免循环）
+func set_auto_play(enabled: bool) -> void:
+	_auto_play_enabled = enabled
+	_update_auto_play_button()
+	if enabled and _panel_open_count == 0 and dialogueState == DialogState.PAUSED:
+		# 第一次推进不延迟，直接跳下一句。后续由 isfinishtyping 接管 timer
+		_process_next()
+	elif not enabled:
+		_cancel_auto_play_timer()
+
+
+## 统一设置自动播放延迟
+func set_auto_play_delay(delay: float) -> void:
+	_auto_play_delay = delay
+
+
+## 面板打开通知：暂停自动推进
+func notify_panel_opened() -> void:
+	_panel_open_count += 1
+	_cancel_auto_play_timer()
+	_update_auto_play_button()
+
+
+## 面板关闭通知：延时后恢复自动推进（不立刻跳）
+func notify_panel_closed() -> void:
+	_panel_open_count = max(0, _panel_open_count - 1)
+	if _panel_open_count == 0:
+		_update_auto_play_button()
+		if _auto_play_enabled and dialogueState == DialogState.PAUSED:
+			_start_auto_play_timer()
+
+
+# ── 内部实现 ──
+
+## 场景按钮点击
+func _on_auto_play_button_toggled(button_pressed: bool) -> void:
+	set_auto_play(button_pressed)
+	# 写回设置存储（按钮是唯一的设置写入源，避免信号循环）
+	if _settings_bridge:
+		_settings_bridge.set_setting(KND_SettingsBridge.CATEGORY_TEXT, KND_SettingsBridge.KEY_AUTO_MODE, button_pressed)
+
+
+## 更新场景按钮的 toggle 状态和文字
+func _update_auto_play_button() -> void:
+	if not _autoPlayButton:
 		return
-	_process_next()
+	_autoPlayButton.set_pressed_no_signal(_auto_play_enabled)
+	if _panel_open_count > 0:
+		_autoPlayButton.set_text("自动播放")
+	elif _auto_play_enabled:
+		_autoPlayButton.set_text("停止播放")
+	else:
+		_autoPlayButton.set_text("自动播放")
+
+
+## 启动自动播放计时器（延迟后推进下一句）
+func _start_auto_play_timer(delay: float = -1.0) -> void:
+	if not _auto_play_enabled or _panel_open_count > 0:
+		return
+	if dialogueState != DialogState.PAUSED:
+		return
+	if delay < 0:
+		delay = _auto_play_delay
+	
+	# 代数递增 = 隐式取消旧的 timer（旧回调会检查 gen 不匹配）
+	_auto_play_timer_generation += 1
+	var gen := _auto_play_timer_generation
+	var timer := get_tree().create_timer(delay)
+	timer.timeout.connect(func():
+		if gen != _auto_play_timer_generation:
+			return
+		if not _auto_play_enabled or _panel_open_count > 0:
+			return
+		_process_next()
+	)
+
+
+## 取消自动播放计时器（代数递增使旧回调失效）
+func _cancel_auto_play_timer() -> void:
+	_auto_play_timer_generation += 1
 
 ## 处理下一个，绑定到下一个按钮
 func _process_next() -> void:
@@ -704,27 +786,6 @@ func _goto_next_node() -> void:
 	print("当前时间：" + str(Time.get_time_string_from_system()))
 	print("导航到节点: %s" % cur_node_id)
 			
-## 开始自动播放的方法
-func start_autoplay(value: bool) -> void:
-	# 暂停守卫：面板打开期间，记录用户意图但不启动计时。
-	# _autoplay_original 由 _pause_autoplay 在面板打开时保存。
-	if _autoplay_paused:
-		autoplay = value
-		if value:
-			_autoPlayButton.set_text("停止播放")
-		else:
-			_autoPlayButton.set_text("自动播放")
-		return
-	autoplay = value
-	if value:
-		_autoPlayButton.set_text("停止播放")
-		await get_tree().process_frame
-		if autoplay:
-			_process_next()
-	else:
-		_autoPlayButton.set_text("自动播放")
-	
-	
 ## 显示背景的方法
 func _display_background(bg_name: String, effect: KND_ActingInterface.BackgroundTransitionEffectsType) -> void:
 	if bg_name == null:

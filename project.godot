@@ -15,6 +15,10 @@ run/main_scene="res://scenes/konado/test_dialogue_screen.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+KND_Settings="*uid://crc32ueqs8u1w"
+
 [display]
 
 window/size/viewport_width=1920
@@ -25,7 +29,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/konado/plugin.cfg")
+enabled=PackedStringArray("res://addons/konado/plugin.cfg", "res://addons/konado_settings/plugin.cfg")
 
 [gui]
 

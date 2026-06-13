@@ -120,40 +120,14 @@ func _is_any_panel_open() -> bool:
 
 
 func _on_panel_opened() -> void:
-	_pause_autoplay()
+	dialogue_manager.notify_panel_opened()
 	dialogue_manager._konado_dialogue_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	dialogue_manager._konado_dialogue_box.set_process_input(false)
 	dialogue_manager._konado_dialogue_box.set_process_unhandled_input(false)
 
 
 func _on_panel_closed() -> void:
-	_resume_autoplay()
+	dialogue_manager.notify_panel_closed()
 	dialogue_manager._konado_dialogue_box.mouse_filter = Control.MOUSE_FILTER_STOP
 	dialogue_manager._konado_dialogue_box.set_process_input(true)
 	dialogue_manager._konado_dialogue_box.set_process_unhandled_input(true)
-
-
-# ============================================================
-# 自动播放暂停 / 恢复
-# ============================================================
-
-func _pause_autoplay() -> void:
-	# 保存原始值，再设 autoplay = false 停止运行中的计时器
-	dialogue_manager._autoplay_original = dialogue_manager.autoplay
-	dialogue_manager._autoplay_paused = true
-	if dialogue_manager.autoplay:
-		dialogue_manager.autoplay = false
-		if dialogue_manager._autoPlayButton:
-			dialogue_manager._autoPlayButton.set_text("自动播放")
-
-
-func _resume_autoplay() -> void:
-	dialogue_manager._autoplay_paused = false
-	# 面板期间用户改过设置 → autoplay 已是最终值，直接用
-	# 面板期间用户未改 → autoplay 被 _pause_autoplay 设为 false，
-	#   需要用 _autoplay_original 恢复原始状态
-	if not dialogue_manager.autoplay and dialogue_manager._autoplay_original == true:
-		dialogue_manager.autoplay = true
-	dialogue_manager._autoplay_original = null
-	if dialogue_manager.autoplay:
-		dialogue_manager.start_autoplay(true)
