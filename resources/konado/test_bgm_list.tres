@@ -1,47 +1,39 @@
-[gd_resource type="Resource" script_class="KND_BgmList" format=3]
+[gd_resource type="Resource" script_class="KND_BgmList" format=3 uid="uid://wlk77ch60js7"]
 
-[ext_resource type="Script" path="res://addons/konado/scripts/audio/bgm/knd_bgm.gd" id="1_bgm"]
-[ext_resource type="Script" path="res://addons/konado/scripts/audio/bgm/knd_bgm_list.gd" id="1_list"]
+[ext_resource type="Script" uid="uid://bdcmjrcgc4uvn" path="res://addons/konado/scripts/audio/bgm/knd_bgm.gd" id="1_bgm"]
+[ext_resource type="Script" uid="uid://cx11453q1ekqa" path="res://addons/konado/scripts/audio/bgm/knd_bgm_list.gd" id="1_list"]
 
 [sub_resource type="Resource" id="Resource_title"]
 script = ExtResource("1_bgm")
 bgm_name = "title"
-bgm = null
 
 [sub_resource type="Resource" id="Resource_easygoing"]
 script = ExtResource("1_bgm")
 bgm_name = "easygoing"
-bgm = null
 
 [sub_resource type="Resource" id="Resource_pink_blood"]
 script = ExtResource("1_bgm")
 bgm_name = "pink_blood"
-bgm = null
 
 [sub_resource type="Resource" id="Resource_anecdote"]
 script = ExtResource("1_bgm")
 bgm_name = "anecdote"
-bgm = null
 
 [sub_resource type="Resource" id="Resource_circulation"]
 script = ExtResource("1_bgm")
 bgm_name = "circulation"
-bgm = null
 
 [sub_resource type="Resource" id="Resource_rest"]
 script = ExtResource("1_bgm")
 bgm_name = "rest"
-bgm = null
 
 [sub_resource type="Resource" id="Resource_battle"]
 script = ExtResource("1_bgm")
 bgm_name = "battle"
-bgm = null
 
 [sub_resource type="Resource" id="Resource_waiting"]
 script = ExtResource("1_bgm")
 bgm_name = "waiting"
-bgm = null
 
 [resource]
 script = ExtResource("1_list")

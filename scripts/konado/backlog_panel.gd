@@ -6,11 +6,15 @@ signal closed
 @onready var close_btn: Button = %CloseBtn
 @onready var scroll_container: ScrollContainer = %ScrollContainer
 @onready var log_container: VBoxContainer = %LogContainer
-@onready var content_area: VBoxContainer = $MarginContainer/VBoxContainer
+@onready var content_area: VBoxContainer = $MarginContainer/PanelContainer/VBoxContainer
 
 const MAX_ENTRIES := 500
 const FADE_DURATION := 0.25
 const SCROLL_SESSION_TIMEOUT_MS := 150
+
+const ENTRY_STYLE_ODD  := preload("res://resources/theme/backlog_entry_odd.tres")
+const ENTRY_STYLE_EVEN := preload("res://resources/theme/backlog_entry_even.tres")
+const ENTRY_NAME_SETTINGS := preload("res://resources/theme/backlog_entry_name.tres")
 
 var _fade_tween: Tween
 var _last_wheel_time_msec: int = 0
@@ -88,28 +92,34 @@ func _fade(target_alpha: float) -> void:
 
 
 func add_entry(character_id: String, text: String) -> void:
-	var entry := HBoxContainer.new()
-	entry.add_theme_constant_override("separation", 8)
+	# 条目背景 Panel（样式从资源加载，交替颜色）
+	var bg := PanelContainer.new()
+	var is_even := log_container.get_child_count() % 2 == 0
+	bg.add_theme_stylebox_override("panel",
+		ENTRY_STYLE_EVEN if is_even else ENTRY_STYLE_ODD)
 
-	# 角色名
+	var entry := HBoxContainer.new()
+	entry.add_theme_constant_override("separation", 12)
+
+	# 角色名（样式从 LabelSettings 资源加载）
 	var name_label := Label.new()
 	name_label.text = character_id + ": " if character_id else "??? : "
-	name_label.add_theme_font_size_override("font_size", 28)
-	name_label.custom_minimum_size.x = 160
+	name_label.label_settings = ENTRY_NAME_SETTINGS
+	name_label.custom_minimum_size.x = 120
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 
-	# 对话文本
+	# 对话文本（颜色由主题 RichTextLabel/colors/default_color 定义）
 	var text_label := RichTextLabel.new()
 	text_label.text = text
 	text_label.bbcode_enabled = false
 	text_label.fit_content = true
 	text_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text_label.add_theme_font_size_override("normal_font_size", 28)
 	text_label.scroll_active = false
 
 	entry.add_child(name_label)
 	entry.add_child(text_label)
-	log_container.add_child(entry)
+	bg.add_child(entry)
+	log_container.add_child(bg)
 
 	# 超过上限则删除最早的
 	if log_container.get_child_count() > MAX_ENTRIES:

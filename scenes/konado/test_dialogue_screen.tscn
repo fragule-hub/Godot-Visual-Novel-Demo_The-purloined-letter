@@ -2,10 +2,10 @@
 
 [ext_resource type="Script" uid="uid://blidh56fw5bnx" path="res://scripts/konado/test_dialogue_screen.gd" id="1_test"]
 [ext_resource type="PackedScene" uid="uid://depq636prptkf" path="res://scenes/konado/konado_dialogue_left_project.tscn" id="2_konado"]
-[ext_resource type="Resource" path="res://story/test_migration.ks" id="5_shot"]
+[ext_resource type="Resource" uid="uid://dujkc664dykb6" path="res://story/test_migration.ks" id="5_shot"]
 [ext_resource type="Resource" uid="uid://dcd00yqjf2ioq" path="res://resources/konado/test_character_list.tres" id="6_chara"]
 [ext_resource type="Resource" uid="uid://3vqihqym44pe" path="res://resources/konado/test_background_list.tres" id="7_bg"]
-[ext_resource type="Resource" path="res://resources/konado/test_bgm_list.tres" id="8_bgm"]
+[ext_resource type="Resource" uid="uid://wlk77ch60js7" path="res://resources/konado/test_bgm_list.tres" id="8_bgm"]
 [ext_resource type="Resource" path="res://resources/konado/test_voice_list.tres" id="9_voice"]
 [ext_resource type="Resource" path="res://resources/konado/test_soundeffect_list.tres" id="10_se"]
 
