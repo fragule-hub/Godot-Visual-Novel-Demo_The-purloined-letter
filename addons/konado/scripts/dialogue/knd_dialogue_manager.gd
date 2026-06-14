@@ -171,8 +171,19 @@ func _on_setting_changed(category: String, key: String, value: Variant) -> void:
 		"audio":
 			if _audio_interface:
 				_audio_interface._on_setting_changed(category, key, value)
+		"display":
+			match key:
+				"fullscreen":
+					if value:
+						DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+					else:
+						DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 
 func _ready() -> void:
+	# 应用启动时的全屏设置
+	if _settings_bridge:
+		if _settings_bridge.get_fullscreen():
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	# 读取自动播放设置
 	if _settings_bridge:
 		var auto = _settings_bridge.get_auto_mode()

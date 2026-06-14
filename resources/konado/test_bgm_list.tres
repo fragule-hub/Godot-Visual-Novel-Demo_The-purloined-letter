@@ -6,34 +6,42 @@
 [sub_resource type="Resource" id="Resource_title"]
 script = ExtResource("1_bgm")
 bgm_name = "title"
+bgm = load("res://assets/music/乌鸦producer/标题音乐.wav")
 
 [sub_resource type="Resource" id="Resource_easygoing"]
 script = ExtResource("1_bgm")
 bgm_name = "easygoing"
+bgm = load("res://assets/music/乌鸦producer/优哉游哉(loop)（放学后轻松的散步、无多余的人打扰）.wav")
 
 [sub_resource type="Resource" id="Resource_pink_blood"]
 script = ExtResource("1_bgm")
 bgm_name = "pink_blood"
+bgm = load("res://assets/music/乌鸦producer/粉色血液（从轻缓到激动，约会、两情相悦）.wav")
 
 [sub_resource type="Resource" id="Resource_anecdote"]
 script = ExtResource("1_bgm")
 bgm_name = "anecdote"
+bgm = load("res://assets/music/乌鸦producer/轶事性知识（一段尘封的故事娓娓道来、悲伤）.wav")
 
 [sub_resource type="Resource" id="Resource_circulation"]
 script = ExtResource("1_bgm")
 bgm_name = "circulation"
+bgm = load("res://assets/music/乌鸦producer/Circulation(loop)（夜间漫布、思考将来）.wav")
 
 [sub_resource type="Resource" id="Resource_rest"]
 script = ExtResource("1_bgm")
 bgm_name = "rest"
+bgm = load("res://assets/music/乌鸦producer/Rest time（安静的酒吧）.wav")
 
 [sub_resource type="Resource" id="Resource_battle"]
 script = ExtResource("1_bgm")
 bgm_name = "battle"
+bgm = load("res://assets/music/乌鸦producer/Start the battle（乱入、突入）.wav")
 
 [sub_resource type="Resource" id="Resource_waiting"]
 script = ExtResource("1_bgm")
 bgm_name = "waiting"
+bgm = load("res://assets/music/乌鸦producer/Waiting（被打断、搞笑）.wav")
 
 [resource]
 script = ExtResource("1_list")
