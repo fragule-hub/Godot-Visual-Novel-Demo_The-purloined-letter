@@ -30,20 +30,6 @@ class_name ClaraPortraitDB
 	"hair_front": "base",
 	"hair_top": "base"
 }
-@export var slot_options: Dictionary = {
-	"body": ["base"],
-	"hair_back": ["base"],
-	"hair_side": ["base", "none"],
-	"ear": ["none", "base"],
-	"outer": ["none", "coat_01"],
-	"face": ["neutral", "angry", "happy", "surprised", "sad", "confused",
-		"serious", "confident", "embarrassed", "blush", "smirk", "mock",
-		"furious", "scared", "fright", "terror", "crying", "sobbing",
-		"unease", "tired", "exhausted", "sleepy", "disgusted", "nauseating",
-		"kiss", "soulless", "psychotic", "stoic"],
-	"hair_front": ["base"],
-	"hair_top": ["none", "base"]
-}
 ## ── 3重预设系统 ──
 ## 方向预设：只设 dir（KS语法: preset:dir_left）
 @export var direction_presets: Dictionary = {
@@ -56,44 +42,12 @@ class_name ClaraPortraitDB
 	"body_casual":      {"outer": "none"},
 	"body_coat":        {"outer": "coat_01"},
 }
-## 面部预设：face=xxx 直接映射到 face slot
-@export var face_presets: Dictionary = {
-	"neutral":    {"face": "neutral"},
-	"smile":      {"face": "happy"},
-	"angry":      {"face": "angry"},
-	"happy":      {"face": "happy"},
-	"surprise":   {"face": "surprised"},
-	"surprised":  {"face": "surprised"},
-	"sad":        {"face": "sad"},
-	"confused":   {"face": "confused"},
-	"serious":    {"face": "serious"},
-	"confident":  {"face": "confident"},
-	"embarrassed":{"face": "embarrassed"},
-	"blush":      {"face": "blush"},
-	"smirk":      {"face": "smirk"},
-	"mock":       {"face": "mock"},
-	"furious":    {"face": "furious"},
-	"scared":     {"face": "scared"},
-	"fright":     {"face": "fright"},
-	"terror":     {"face": "terror"},
-	"crying":     {"face": "crying"},
-	"sobbing":    {"face": "sobbing"},
-	"unease":     {"face": "unease"},
-	"tired":      {"face": "tired"},
-	"exhausted":  {"face": "exhausted"},
-	"sleepy":     {"face": "sleepy"},
-	"disgusted":  {"face": "disgusted"},
-	"nauseating": {"face": "nauseating"},
-	"kiss":       {"face": "kiss"},
-	"soulless":   {"face": "soulless"},
-	"psychotic":  {"face": "psychotic"},
-	"stoic":      {"face": "stoic"},
-}
+## 表情：统一通过 face=xxx 调用，不使用 preset 别名
+@export var face_presets: Dictionary = {}
 @export var layer_paths: Dictionary = {
 	"center": {
 		"body": {"base": "res://assets/立绘/clara/layers/center/body/base.png"},
 		"hair_back": {"base": "res://assets/立绘/clara/layers/center/hair_back/base.png"},
-		"hair_side": {"base": "res://assets/立绘/clara/layers/center/hair_side/base.png"},
 		"ear": {"base": "res://assets/立绘/clara/layers/center/ear/base.png"},
 		"outer": {"coat_01": "res://assets/立绘/clara/layers/center/outer/coat_01.png"},
 		"face": {
@@ -208,7 +162,11 @@ class_name ClaraPortraitDB
 		"hair_top": {"base": "res://assets/立绘/clara/layers/right/hair_top/base.png"}
 	}
 }
-@export var conflict_rules: Array[Dictionary] = []
+@export var conflict_rules: Array[Dictionary] = [
+	{"when": {"dir": "left"}, "set": {"hair_side": "base"}},
+	{"when": {"dir": "right"}, "set": {"hair_side": "base"}},
+	{"when": {"dir": "center"}, "set": {"hair_side": "none"}},
+]
 
 
 func get_direction_preset(preset_id: String) -> Dictionary:
@@ -253,15 +211,6 @@ func get_layer_path(direction: String, slot_name: String, option_name: String) -
 	if direction != default_direction:
 		return _get_layer_path_exact(default_direction, slot_name, default_option)
 	return ""
-
-
-func get_slot_options(slot_name: String) -> Array[String]:
-	var options: Array[String] = []
-	var options_value: Variant = slot_options.get(slot_name, [])
-	if options_value is Array:
-		for option_value in options_value:
-			options.append(str(option_value))
-	return options
 
 
 func get_defined_layer_paths() -> PackedStringArray:

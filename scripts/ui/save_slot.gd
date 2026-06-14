@@ -13,6 +13,9 @@ class_name SaveSlot
 @onready var _load_btn: Button = %LoadBtn
 @onready var _del_btn: Button = %DelBtn
 
+## 只读模式：隐藏保存按钮（标题界面纯读档场景）
+@export var read_only: bool = false
+
 const STYLE_NORMAL := preload("res://resources/theme/save_slot_bg.tres")
 const STYLE_EMPTY := preload("res://resources/theme/save_slot_empty_bg.tres")
 
@@ -46,6 +49,7 @@ func _ready() -> void:
 	_time_label.text = save_time
 	_auto_label.visible = auto_save
 	_apply_empty_style()
+	_save_btn.visible = not read_only
 
 	_save_btn.pressed.connect(_on_save_pressed)
 	_load_btn.pressed.connect(_on_load_pressed)

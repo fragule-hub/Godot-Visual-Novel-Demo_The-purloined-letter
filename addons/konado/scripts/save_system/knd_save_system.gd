@@ -302,20 +302,17 @@ func _capture_audio_state() -> Dictionary:
 		var audio_interface = dialogue_manager._audio_interface
 		print("捕获音频状态")
 		
-		# 保存BGM状态
-		if audio_interface.bgm_player:
-			print("BGM播放器存在")
-			if audio_interface.bgm_player.stream:
-				state["bgm"] = {
-					"stream_path": audio_interface.bgm_player.stream.resource_path,
-					"is_playing": audio_interface.bgm_player.is_playing(),
-					"volume_db": audio_interface.bgm_player.volume_db
-				}
-				print("保存BGM状态：" + str(state["bgm"]))
-			else:
-				print("BGM播放器无流")
+		# 保存BGM状态（使用 BgmManager autoload，跨场景持久化）
+		var bgm_stream: AudioStream = BgmManager.get_current_stream()
+		if bgm_stream:
+			state["bgm"] = {
+				"stream_path": bgm_stream.resource_path,
+				"is_playing": BgmManager.is_playing(),
+				"volume_db": 0.0  # volume_db 由 BgmManager 动态计算，存档时不保存
+			}
+			print("保存BGM状态：" + str(state["bgm"]))
 		else:
-			print("BGM播放器不存在")
+			print("BGM播放器无流")
 		
 		# 保存语音状态
 		if audio_interface.voice_player:
@@ -359,17 +356,17 @@ func _restore_audio_state(state: Dictionary) -> void:
 	
 	var audio_interface = dialogue_manager._audio_interface
 	
-	# 恢复BGM状态
+	# 恢复BGM状态（使用 BgmManager autoload）
 	if state.has("bgm"):
 		var bgm_state = state["bgm"]
 		if bgm_state.has("stream_path"):
 			var bgm_stream = load(bgm_state["stream_path"])
 			if bgm_stream:
-				audio_interface.bgm_player.stream = bgm_stream
-				if bgm_state.has("volume_db"):
-					audio_interface.bgm_player.volume_db = bgm_state["volume_db"]
 				if bgm_state.has("is_playing") and bgm_state["is_playing"]:
-					audio_interface.bgm_player.play()
+					BgmManager.play_stream(bgm_stream)
+				else:
+					# BGM 未在播放，仅预加载 stream（不播放）
+					pass
 	
 	# 恢复语音状态
 	if state.has("voice"):

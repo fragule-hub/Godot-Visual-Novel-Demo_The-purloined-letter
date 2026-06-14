@@ -67,11 +67,23 @@ func _ready() -> void:
 	if save_btn is Button:
 		save_btn.pressed.connect(_save_overlay.open)
 
+	# 连接「返回」按钮
+	var return_btn := get_node_or_null(
+		"KonadoDialogueLeftProject/KonadoUI/ColorRect/HBoxContainer/Return")
+	if return_btn is Button:
+		return_btn.pressed.connect(_on_return_to_title)
+
 	# ── 设置面板信号 ──
 	if dialogue_manager._settings_bridge:
 		var bridge = dialogue_manager._settings_bridge
 		bridge.settings_panel_opened.connect(_on_panel_opened)
 		bridge.settings_panel_closed.connect(_on_panel_closed)
+
+	# ── 从标题界面加载存档 ──
+	if GameState.pending_save_id >= 0:
+		var save_id: int = GameState.pending_save_id
+		GameState.pending_save_id = -1
+		dialogue_manager.save_system.load_game.call_deferred(save_id)
 
 
 func _input(event: InputEvent) -> void:
@@ -131,3 +143,7 @@ func _on_panel_closed() -> void:
 	dialogue_manager._konado_dialogue_box.mouse_filter = Control.MOUSE_FILTER_STOP
 	dialogue_manager._konado_dialogue_box.set_process_input(true)
 	dialogue_manager._konado_dialogue_box.set_process_unhandled_input(true)
+
+
+func _on_return_to_title() -> void:
+	get_tree().change_scene_to_file("res://scenes/ui/title_screen.tscn")

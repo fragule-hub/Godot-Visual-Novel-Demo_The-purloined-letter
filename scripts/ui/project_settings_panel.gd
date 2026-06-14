@@ -11,6 +11,7 @@ const SETTINGS_THEME := preload("res://resources/theme/settings_theme.tres")
 @onready var _tab_container: TabContainer = %TabContainer
 @onready var _reset_btn: Button = %ResetBtn
 @onready var _close_btn: Button = %CloseBtn
+@onready var _return_btn: Button = %ReturnBtn
 
 var _confirm_dialog: ConfirmationDialog
 var _overlay: KND_OverlayPanel  ## 由外部设置
@@ -24,6 +25,7 @@ func _ready() -> void:
 
 	_reset_btn.pressed.connect(_on_reset_pressed)
 	_close_btn.pressed.connect(_on_close_pressed)
+	_return_btn.pressed.connect(_on_return_pressed)
 
 	_build_tabs()
 
@@ -107,6 +109,10 @@ func _on_reset_confirmed() -> void:
 func _on_close_pressed() -> void:
 	if _overlay:
 		_overlay.close()
+
+
+func _on_return_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/ui/title_screen.tscn")
 
 
 func _get_mgr() -> Node:

@@ -4,8 +4,6 @@ class_name PortraitActingInterface
 ## 统一立绘表演管理器
 ## 根据 PortraitActorLayoutDB 中角色类型自动选择 Actor 场景（SimplePortrait / CompositePortrait）
 
-const CLARA_ID: String = "Clara"
-
 @export var simple_actor_scene: PackedScene = preload("res://scenes/portrait/simple_portrait.tscn")
 @export var composite_actor_scene: PackedScene = preload("res://scenes/portrait/composite_portrait.tscn")
 @export var actor_layout_db: Resource = preload("res://resources/portrait/project_actor_layout.tres")
@@ -67,7 +65,6 @@ func create_new_character(chara_id: String, h_division: int, pos_h: int, state: 
 	actor_node.actor_entered.connect(
 		func() -> void:
 			character_created.emit()
-			print("新建了演员：" + chara_id + " 演员状态：" + state)
 	)
 	actor_node.actor_moved.connect(_on_character_moved)
 
@@ -98,7 +95,6 @@ func change_actor_state(actor_id: String, state_id: String, state_tex: Texture) 
 		actor_node.set_character_texture(state_tex)
 
 	character_state_changed.emit()
-	print("切换 " + actor_id + " 到 " + state_id + " 状态")
 
 
 # ============================================================

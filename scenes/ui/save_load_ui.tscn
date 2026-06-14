@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://bis686bx8m1dm"]
+[gd_scene format=3 uid="uid://v2r0hq4syte2"]
 
 [ext_resource type="Script" path="res://scripts/ui/save_load_overlay.gd" id="1_overlay"]
 

@@ -34,16 +34,6 @@
 					"step": 0.01,
 					"default_value": 1.0,
 					"platforms": ["all"]
-				},
-				{
-					"key": "voice_volume",
-					"label": "语音音量",
-					"type": 0,
-					"min_value": 0.0,
-					"max_value": 1.0,
-					"step": 0.01,
-					"default_value": 1.0,
-					"platforms": ["all"]
 				}
 			]
 		},
@@ -77,20 +67,6 @@
 					"type": 1,
 					"default_value": false,
 					"platforms": ["all"]
-				},
-				{
-					"key": "skip_read",
-					"label": "跳过已读",
-					"type": 1,
-					"default_value": false,
-					"platforms": ["all"]
-				},
-				{
-					"key": "skip_all",
-					"label": "跳过全部",
-					"type": 1,
-					"default_value": false,
-					"platforms": ["all"]
 				}
 			]
 		},
@@ -112,13 +88,6 @@
 					"options": ["zh", "en", "ja"],
 					"default_value": "zh",
 					"platforms": ["all"]
-				},
-				{
-					"key": "debug_mode",
-					"label": "调试模式",
-					"type": 1,
-					"default_value": false,
-					"platforms": ["debug"]
 				}
 			]
 		}

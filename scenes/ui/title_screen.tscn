@@ -1,0 +1,200 @@
+[gd_scene format=3 uid="uid://554ok5u5bhxp"]
+
+[ext_resource type="Theme" path="res://resources/theme/title_screen_theme.tres" id="1_theme"]
+[ext_resource type="Script" uid="uid://xstrm7fk6p4l" path="res://scripts/ui/title_screen.gd" id="2_script"]
+[ext_resource type="StyleBox" path="res://resources/theme/panel_separator.tres" id="3_separator"]
+[ext_resource type="Shader" path="res://resources/title_bg.gdshader" id="4_shader"]
+[ext_resource type="Texture2D" uid="uid://diwdpnac3b1jr" path="res://resources/particle_glow.png" id="5_particle_tex"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bg"]
+shader = ExtResource("4_shader")
+shader_parameter/speed = 0.03
+shader_parameter/color_a = Color(0.06, 0.14, 0.18, 1)
+shader_parameter/color_b = Color(0.04, 0.08, 0.22, 1)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(960, 540, 0)
+direction = Vector3(0, -1, 0)
+initial_velocity_min = 4.0
+initial_velocity_max = 18.0
+gravity = Vector3(0, -2.5, 0)
+scale_min = 0.2
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font_size = 96
+font_color = Color(0.9, 0.95, 0.97, 1)
+shadow_size = 4
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_offset = Vector2(2, 2)
+
+[sub_resource type="LabelSettings" id="LabelSettings_version"]
+font_size = 20
+font_color = Color(0.85, 0.92, 0.94, 0.3)
+
+[sub_resource type="Gradient" id="Gradient_bg"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.06, 0.14, 0.18, 1, 0.04, 0.08, 0.1, 1, 0.02, 0.04, 0.05, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_bg"]
+gradient = SubResource("Gradient_bg")
+
+[node name="TitleScreen" type="Control" unique_id=1738343466]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Background" type="ColorRect" parent="." unique_id=310036670]
+material = SubResource("ShaderMaterial_bg")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.055, 0.118, 0.149, 1)
+
+[node name="Particles" type="GPUParticles2D" parent="." unique_id=310036680]
+position = Vector2(960, 540)
+amount = 50
+texture = ExtResource("5_particle_tex")
+lifetime = 2.0
+process_material = SubResource("ParticleProcessMaterial")
+
+[node name="MainLayout" type="HBoxContainer" parent="." unique_id=2013987142]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LeftPanel" type="MarginContainer" parent="MainLayout" unique_id=1008562679]
+custom_minimum_size = Vector2(768, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/margin_left = 80
+theme_override_constants/margin_top = 80
+theme_override_constants/margin_right = 60
+theme_override_constants/margin_bottom = 40
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/LeftPanel" unique_id=-656682375]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+
+[node name="TopSpacer" type="Control" parent="MainLayout/LeftPanel/VBox" unique_id=276084559]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TitleLabel" type="Label" parent="MainLayout/LeftPanel/VBox" unique_id=1502290008]
+layout_mode = 2
+text = "失 窃 的 信"
+label_settings = SubResource("LabelSettings_title")
+horizontal_alignment = 1
+
+[node name="TitleSpacer" type="Control" parent="MainLayout/LeftPanel/VBox" unique_id=-656682374]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+
+[node name="Separator" type="HSeparator" parent="MainLayout/LeftPanel/VBox" unique_id=1185848125]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_styles/separator = ExtResource("3_separator")
+
+[node name="MenuSpacer" type="Control" parent="MainLayout/LeftPanel/VBox" unique_id=-656682373]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+
+[node name="MenuContainer" type="VBoxContainer" parent="MainLayout/LeftPanel/VBox" unique_id=1089156809]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 20
+
+[node name="NewGameBtn" type="Button" parent="MainLayout/LeftPanel/VBox/MenuContainer" unique_id=1762947033]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "开始新游戏"
+
+[node name="ContinueBtn" type="Button" parent="MainLayout/LeftPanel/VBox/MenuContainer" unique_id=261902298]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "继续游戏"
+
+[node name="SettingsBtn" type="Button" parent="MainLayout/LeftPanel/VBox/MenuContainer" unique_id=1909458930]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "系统设置"
+
+[node name="CreditsBtn" type="Button" parent="MainLayout/LeftPanel/VBox/MenuContainer" unique_id=1289618353]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "制作团队"
+
+[node name="QuitBtn" type="Button" parent="MainLayout/LeftPanel/VBox/MenuContainer" unique_id=163934204]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"QuitButton"
+text = "结束游戏"
+
+[node name="BottomSpacer" type="Control" parent="MainLayout/LeftPanel/VBox" unique_id=1184550716]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VersionLabel" type="Label" parent="MainLayout/LeftPanel/VBox" unique_id=-656682372]
+layout_mode = 2
+text = "v0.1.0"
+label_settings = SubResource("LabelSettings_version")
+horizontal_alignment = 2
+
+[node name="RightPanel" type="Control" parent="MainLayout" unique_id=1847958862]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GradientBg" type="TextureRect" parent="MainLayout/RightPanel" unique_id=581086425]
+modulate = Color(1, 1, 1, 0.35)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture1D_bg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="ClaraClickArea" type="Control" parent="MainLayout/RightPanel" unique_id=334590799]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_default_cursor_shape = 2
+
+[node name="ClaraPlaceholder" type="Control" parent="MainLayout/RightPanel/ClaraClickArea" unique_id=1616920944]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

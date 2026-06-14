@@ -57,6 +57,10 @@ signal on_dialogue_hide_completed
 @export var max_audio_interval: float = 0.08   ## 音效最大播放间隔（秒）
 @export var audio_volumn: float = 0.6         ## 音效音量(0-1)
 
+# 打字机音效音量管理（跟随 KND_Settings 的 master_volume × sfx_volume）
+var _master_volume: float = 1.0
+var _sfx_volume: float = 1.0
+
 @export_group("对话框设置")
 @export var dialogue_margins: int = 100     ## 对话框左右边距
 @export var dialogue_margin_bottom: int = 100  ## 对话框底部边距
@@ -114,8 +118,11 @@ func _ready() -> void:
 		audio_player.name = "TypingAudioPlayer"
 		# 绑定滴滴音效资源
 		audio_player.stream = typing_effect_audio
-		# 设置音量，关闭自动播放
-		audio_player.volume_db = linear_to_db(audio_volumn)
+		# 音量跟随设置系统（master × sfx × audio_volumn）
+		_load_typing_audio_volume()
+		var mgr := get_node_or_null("/root/KND_Settings")
+		if mgr and mgr.has_signal("setting_changed"):
+			mgr.setting_changed.connect(_on_typing_audio_setting_changed)
 		audio_player.autoplay = false
 		# 初始化随机间隔
 		current_random_interval = randf_range(min_audio_interval, max_audio_interval)
@@ -425,3 +432,27 @@ func _update_ellipsis_position() -> void:
 func _on_character_name_label_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.is_pressed():
 		on_character_name_click.emit()
+
+
+## 从 KND_Settings 加载 master/sfx 音量并更新打字机音效
+func _load_typing_audio_volume() -> void:
+	var mgr := get_node_or_null("/root/KND_Settings")
+	if mgr:
+		var mv: Variant = mgr.get_setting("audio", "master_volume")
+		_master_volume = float(mv) if mv != null else 1.0
+		var sv: Variant = mgr.get_setting("audio", "sfx_volume")
+		_sfx_volume = float(sv) if sv != null else 1.0
+	_apply_typing_audio_volume()
+
+
+func _apply_typing_audio_volume() -> void:
+	var linear := _master_volume * _sfx_volume * audio_volumn
+	var db: float = -80.0 if linear <= 0.0 else 20.0 * log(linear) / log(10.0)
+	audio_player.volume_db = db
+
+
+func _on_typing_audio_setting_changed(category: String, key: String, _value: Variant) -> void:
+	if category != "audio":
+		return
+	if key == "master_volume" or key == "sfx_volume":
+		_load_typing_audio_volume()

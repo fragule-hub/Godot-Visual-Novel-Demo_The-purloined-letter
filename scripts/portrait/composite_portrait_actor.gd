@@ -3,7 +3,8 @@ extends PortraitActorBase
 class_name CompositePortraitActor
 
 ## 组合立绘 Actor（Clara）
-## 16 层动态组合，通过 ClaraPortraitDB + ClaraStateCodec 管理状态。
+## 8 层动态组合（hair_back, body, outer, face, hair_side, ear, hair_front, hair_top），
+## 通过 ClaraPortraitDB + ClaraStateCodec 管理状态。
 ## 层结构由 portrait_db.slot_order 定义，动态创建，不依赖场景预置节点。
 
 const CLARA_STATE_CODEC_SCRIPT: Script = preload("res://scripts/portrait/clara/clara_state_codec.gd")
@@ -14,6 +15,8 @@ var _state_codec: RefCounted
 var _current_state: Dictionary = {}
 var _texture_cache: Dictionary = {}
 var _missing_texture_warnings: Dictionary = {}
+## 层节点缓存：{ VP_uid → { slot_name: TextureRect } }，避免反复创建/销毁
+var _layer_nodes: Dictionary = {}
 
 
 # ============================================================
@@ -26,6 +29,10 @@ func _ready() -> void:
 		portrait_db = load("res://resources/portrait/clara/clara_portrait_db.tres")
 	# 初始化 state_codec
 	_state_codec = CLARA_STATE_CODEC_SCRIPT.new()
+	# 自身及 Slot 忽略鼠标事件（CompositePortraitActor 始终放在 ClickArea 内部）
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if slot:
+		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# 基类 _ready：创建 VP + 布局 + 初始渲染
 	super._ready()
 
@@ -36,10 +43,6 @@ func _ready() -> void:
 
 ## 将所有可见层渲染到指定 SubViewport
 func _render_frame_to_viewport(vp: SubViewport) -> void:
-	# 清空旧内容
-	for child in vp.get_children():
-		child.queue_free()
-
 	if portrait_db == null:
 		return
 
@@ -62,20 +65,43 @@ func _render_frame_to_viewport(vp: SubViewport) -> void:
 		default_direction = "center"
 	var direction: String = str(_current_state.get("dir", default_direction))
 
-	# 创建 LayerStack
-	var layer_stack := Control.new()
-	layer_stack.name = "LayerStack"
-	layer_stack.position = Vector2.ZERO
-	layer_stack.size = layer_size
-	vp.add_child(layer_stack)
+	# 获取或创建层节点缓存
+	var vp_key: int = vp.get_instance_id()
+	var cached: Dictionary = _layer_nodes.get(vp_key, {})
 
-	# 按顺序创建每层 TextureRect
+	# 首次渲染此 VP：创建 LayerStack 和全部 TextureRect
+	if cached.is_empty():
+		var layer_stack := Control.new()
+		layer_stack.name = "LayerStack"
+		layer_stack.position = Vector2.ZERO
+		layer_stack.size = layer_size
+		vp.add_child(layer_stack)
+
+		for slot_name_value in slot_order:
+			var slot_name: String = str(slot_name_value)
+			var tex_rect := TextureRect.new()
+			tex_rect.name = slot_name.capitalize()
+			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tex_rect.stretch_mode = TextureRect.STRETCH_SCALE
+			tex_rect.size = layer_size
+			tex_rect.position = Vector2.ZERO
+			layer_stack.add_child(tex_rect)
+			cached[slot_name] = tex_rect
+
+		_layer_nodes[vp_key] = cached
+
+	# 更新各层纹理和可见性
 	for slot_name_value in slot_order:
 		var slot_name: String = str(slot_name_value)
+		var tex_rect: TextureRect = cached.get(slot_name)
+		if tex_rect == null:
+			continue
+
 		var option_name: String = str(_current_state.get(slot_name, "none"))
 
-		# 跳过隐藏层
+		# 隐藏层
 		if option_name == "none" or option_name.is_empty():
+			tex_rect.visible = false
 			continue
 
 		var texture_path: String = ""
@@ -83,20 +109,16 @@ func _render_frame_to_viewport(vp: SubViewport) -> void:
 			texture_path = str(portrait_db.call("get_layer_path", direction, slot_name, option_name))
 
 		if texture_path.is_empty():
+			tex_rect.visible = false
 			continue
 
 		var texture: Texture2D = _load_layer_texture(texture_path)
 		if texture == null:
+			tex_rect.visible = false
 			continue
 
-		var tex_rect := TextureRect.new()
-		tex_rect.name = slot_name.capitalize()
 		tex_rect.texture = texture
-		tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tex_rect.stretch_mode = TextureRect.STRETCH_SCALE
-		tex_rect.size = layer_size
-		tex_rect.position = Vector2.ZERO
-		layer_stack.add_child(tex_rect)
+		tex_rect.visible = true
 
 
 # ============================================================
@@ -117,6 +139,7 @@ func apply_state(state_text: String) -> void:
 		_current_state = resolved_value
 	else:
 		_current_state = {}
+		push_warning("CompositePortraitActor: resolve_state('%s') 返回非 Dictionary: %s" % [state_text, resolved_value])
 
 	# 非过渡模式：直接刷新当前 VP
 	if _vp != null and (_old_vp == null):
@@ -161,6 +184,11 @@ func _calc_vp_size() -> Vector2:
 	if scale_val <= 0:
 		scale_val = 1.0
 	return canvas_size * scale_val
+
+
+func _exit_tree() -> void:
+	_layer_nodes.clear()
+	super._exit_tree()
 
 
 # ============================================================

@@ -6,21 +6,3 @@
 script = ExtResource("2_oqao7")
 display_scale = 1.0
 anchor_y_ratio = 1.0
-slot_order = Array[String](["hair_back", "body", "outer", "face", "hair_side", "ear", "hair_front", "hair_top"])
-default_state = {
-"dir": "center",
-"body": "base",
-"outer": "none",
-"hair_back": "base",
-"hair_side": "none",
-"ear": "base",
-"face": "neutral",
-"hair_front": "base",
-"hair_top": "base"
-}
-direction_presets = {
-"dir_center": {"dir": "center"},
-"dir_left": {"dir": "left", "hair_side": "base"},
-"dir_right": {"dir": "right", "hair_side": "base"}
-}
-conflict_rules = Array[Dictionary]([])

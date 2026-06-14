@@ -132,7 +132,7 @@ alignment = 2
 [node name="Save" type="Button" parent="KonadoUI/ColorRect/HBoxContainer" unique_id=122824413]
 layout_mode = 2
 theme_type_variation = &"FlatButton"
-text = "存档"
+text = "存读档"
 flat = true
 
 [node name="AutoPlay" type="Button" parent="KonadoUI/ColorRect/HBoxContainer" unique_id=582333509]
@@ -159,6 +159,12 @@ flat = true
 layout_mode = 2
 theme_type_variation = &"FlatButton"
 text = "设置"
+flat = true
+
+[node name="Return" type="Button" parent="KonadoUI/ColorRect/HBoxContainer" unique_id=4251038276]
+layout_mode = 2
+theme_type_variation = &"FlatButton"
+text = "返回"
 flat = true
 
 [node name="KonadoAudioInterface" type="Node2D" parent="." unique_id=1077148349 node_paths=PackedStringArray("bgm_player", "voice_player", "sound_effect_player", "_settings_bridge")]

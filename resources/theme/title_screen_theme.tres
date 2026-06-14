@@ -1,0 +1,48 @@
+[gd_resource type="Theme" format=3]
+
+[ext_resource type="FontFile" uid="uid://dihv3p6n7pp2e" path="res://addons/konado/fonts/ResourceHanRoundedCN-Medium.ttf" id="1_font"]
+[ext_resource type="StyleBoxFlat" path="res://resources/theme/title_button_normal.tres" id="2_normal"]
+[ext_resource type="StyleBoxFlat" path="res://resources/theme/title_button_hover.tres" id="3_hover"]
+[ext_resource type="StyleBoxFlat" path="res://resources/theme/title_button_pressed.tres" id="4_pressed"]
+[ext_resource type="StyleBoxFlat" path="res://resources/theme/title_button_disabled.tres" id="5_disabled"]
+[ext_resource type="StyleBoxFlat" path="res://resources/theme/title_button_primary_normal.tres" id="6_pn"]
+[ext_resource type="StyleBoxFlat" path="res://resources/theme/title_button_primary_hover.tres" id="7_ph"]
+[ext_resource type="StyleBoxFlat" path="res://resources/theme/title_button_primary_pressed.tres" id="8_pp"]
+[ext_resource type="StyleBoxFlat" path="res://resources/theme/title_button_quit_hover.tres" id="9_qh"]
+[ext_resource type="StyleBox" path="res://resources/theme/panel_separator.tres" id="10_separator"]
+
+[resource]
+default_font = ExtResource("1_font")
+Button/colors/font_color = Color(0.85, 0.92, 0.94, 1)
+Button/colors/font_hover_color = Color(0.4, 0.8, 0.88, 1)
+Button/colors/font_pressed_color = Color(0.5, 0.9, 0.95, 1)
+Button/colors/font_disabled_color = Color(0.4, 0.45, 0.48, 0.6)
+Button/font_sizes/font_size = 42
+Button/styles/normal = ExtResource("2_normal")
+Button/styles/hover = ExtResource("3_hover")
+Button/styles/pressed = ExtResource("4_pressed")
+Button/styles/disabled = ExtResource("5_disabled")
+
+; ── PrimaryButton 类型（开始/继续游戏） ──
+PrimaryButton/colors/font_color = Color(0.92, 0.96, 0.98, 1)
+PrimaryButton/colors/font_hover_color = Color(0.5, 0.9, 0.95, 1)
+PrimaryButton/colors/font_pressed_color = Color(0.6, 0.95, 0.98, 1)
+PrimaryButton/font_sizes/font_size = 52
+PrimaryButton/styles/normal = ExtResource("6_pn")
+PrimaryButton/styles/hover = ExtResource("7_ph")
+PrimaryButton/styles/pressed = ExtResource("8_pp")
+PrimaryButton/styles/disabled = ExtResource("5_disabled")
+
+; ── QuitButton 类型（结束游戏） ──
+QuitButton/colors/font_color = Color(0.85, 0.92, 0.94, 1)
+QuitButton/colors/font_hover_color = Color(0.95, 0.5, 0.35, 1)
+QuitButton/colors/font_pressed_color = Color(0.9, 0.4, 0.28, 1)
+QuitButton/font_sizes/font_size = 42
+QuitButton/styles/normal = ExtResource("2_normal")
+QuitButton/styles/hover = ExtResource("9_qh")
+QuitButton/styles/pressed = ExtResource("4_pressed")
+QuitButton/styles/disabled = ExtResource("5_disabled")
+
+Label/colors/font_color = Color(0.85, 0.92, 0.94, 1)
+Label/font_sizes/font_size = 96
+HSeparator/styles/separator = ExtResource("10_separator")

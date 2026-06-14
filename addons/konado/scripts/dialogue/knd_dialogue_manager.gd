@@ -169,8 +169,8 @@ func _on_setting_changed(category: String, key: String, value: Variant) -> void:
 				"auto_mode":
 					set_auto_play(value)
 		"audio":
-			# 音频设置变更由 KND_AudioInterface 处理
-			pass
+			if _audio_interface:
+				_audio_interface._on_setting_changed(category, key, value)
 
 func _ready() -> void:
 	# 读取自动播放设置

@@ -11,13 +11,15 @@ config_version=5
 [application]
 
 config/name="new_novel_demo"
-run/main_scene="res://scenes/konado/test_dialogue_screen.tscn"
+run/main_scene="res://scenes/ui/title_screen.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
 KND_Settings="*uid://crc32ueqs8u1w"
+GameState="*res://scripts/ui/game_state.gd"
+BgmManager="*res://autoplay/bgm_manager.gd"
 
 [display]
 

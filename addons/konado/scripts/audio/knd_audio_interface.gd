@@ -25,26 +25,26 @@ signal voice_finish_playing
 
 ## 缓存的音量值
 var _master_volume: float = 1.0
-var _music_volume: float = 0.8
 var _sfx_volume: float = 1.0
-var _voice_volume: float = 1.0
 
 
-## 从设置更新音量
+func _ready() -> void:
+	if _settings_bridge:
+		_update_volume_from_settings()
+
+
+## 从设置更新音量（仅 voice / sfx，BGM 由 BgmManager autoload 自行管理）
 func _update_volume_from_settings() -> void:
 	if _settings_bridge == null:
 		return
 	
 	_master_volume = _settings_bridge.get_master_volume()
-	_music_volume = _settings_bridge.get_music_volume()
 	_sfx_volume = _settings_bridge.get_sfx_volume()
-	_voice_volume = _settings_bridge.get_voice_volume()
 	
-	# 应用音量
-	if bgm_player:
-		bgm_player.volume_db = linear_to_db(_master_volume * _music_volume)
+	# bgm_player 音量由 BgmManager autoload 管理
+	# voice_volume 已从设置中移除，语音仅受主音量控制
 	if voice_player:
-		voice_player.volume_db = linear_to_db(_master_volume * _voice_volume)
+		voice_player.volume_db = linear_to_db(_master_volume)
 	if sound_effect_player:
 		sound_effect_player.volume_db = linear_to_db(_master_volume * _sfx_volume)
 
@@ -60,28 +60,15 @@ func linear_to_db(linear: float) -> float:
 	return 20.0 * log(linear) / log(10.0)
 
 
-## 播放BGM的方法（循环播放）
+## 播放BGM的方法（委托 BgmManager autoload，跨场景持久化）
 func play_bgm(audio: AudioStream, audio_id: String) -> void:
-	if not bgm_player:
-		push_error("没找到bgm_player")
-		finish_playbgm.emit()
-		return
-	if bgm_player.is_playing():
-		bgm_player.stop()
-	bgm_player.stream = audio
-	bgm_player.play()
+	BgmManager.play_stream(audio)
 	finish_playbgm.emit()
-	bgm_player.finished.connect(func():
-		bgm_player.play())
 		
 	
-## 停止播放BGM的方法
+## 停止播放BGM的方法（委托 BgmManager autoload）
 func stop_bgm() -> void:
-	if not bgm_player:
-		push_error("没找到bgm_player")
-		return
-	if bgm_player.is_playing():
-		bgm_player.stop()
+	BgmManager.stop()
 
 
 ## 播放语音的方法

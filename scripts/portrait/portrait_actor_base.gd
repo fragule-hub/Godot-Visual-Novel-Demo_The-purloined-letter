@@ -47,6 +47,7 @@ func _setup_actor() -> void:
 	# TextureRect — 显示 VP 纹理
 	_texture_rect = TextureRect.new()
 	_texture_rect.name = "TextureRect"
+	_texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
 	_texture_rect.texture = _vp.get_texture()
@@ -90,6 +91,10 @@ func _apply_layout() -> void:
 		slot_h - visual_h + offset.y
 	)
 
+	# position_zero: 强制 TextureRect 归零（标题界面等不需要自动偏移的场景）
+	if layout_config.get("position_zero", false):
+		_texture_rect.position = Vector2.ZERO
+
 
 # ============================================================
 # 子类虚方法
@@ -112,20 +117,25 @@ func fade_apply_state(state_text: String) -> void:
 		apply_state(state_text)
 		return
 
-	# 1. 终止进行中的交叉溶解
+	# 1. 终止进行中的交叉溶解，并同步纹理指针（否则 tween kill 后 _texture_rect.texture 永久停滞）
 	if _transition_tween and _transition_tween.is_valid():
 		_transition_tween.kill()
+		_texture_rect.texture = _vp.get_texture()
+		_texture_rect.modulate.a = 1.0
 
 	# 2. 清理残留 overlay
 	_cleanup_crossfade()
 
-	# 3. 旧 VP 延迟释放：入队而非立即 free（_texture_rect 仍在引用其纹理）
+	# 3. 旧 VP 延迟释放，限制 pending 数量防止快速点击积累
 	if _old_vp:
 		_pending_free_vps.append(_old_vp)
 		_old_vp = null
+		while _pending_free_vps.size() > 2:
+			_pending_free_vps.pop_front().queue_free()
 
-	# 4. 恢复 _texture_rect 不透明度（不切换纹理，避免指向未渲染 VP）
-	_texture_rect.modulate.a = 1.0
+	# 4. 恢复 _texture_rect 不透明度（已在步1处理，此处防御重复）
+	if _texture_rect.modulate.a < 1.0:
+		_texture_rect.modulate.a = 1.0
 
 	# 5. 冻结当前 VP
 	_old_vp = _vp
@@ -144,6 +154,7 @@ func fade_apply_state(state_text: String) -> void:
 	# 7. 覆盖层（alpha=0 不可见；首帧纹理未渲染时不会产生白块）
 	_overlay_rect = TextureRect.new()
 	_overlay_rect.name = "OverlayRect"
+	_overlay_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_overlay_rect.stretch_mode = TextureRect.STRETCH_SCALE
 	_overlay_rect.texture = _vp.get_texture()
@@ -179,6 +190,16 @@ func _on_crossfade_finished() -> void:
 		vp.queue_free()
 	_pending_free_vps.clear()
 	_cleanup_crossfade()
+
+
+func _exit_tree() -> void:
+	# 确保 Actor 销毁时释放所有 pending VP
+	if _old_vp:
+		_old_vp.queue_free()
+		_old_vp = null
+	for vp in _pending_free_vps:
+		vp.queue_free()
+	_pending_free_vps.clear()
 
 
 # ============================================================
@@ -221,6 +242,10 @@ func set_highlight(highlight: bool) -> void:
 
 func _on_resized() -> void:
 	if slot == null:
+		return
+
+	# position_zero 模式下跳过自动位置计算（由 _apply_layout 手动定位）
+	if layout_config.get("position_zero", false):
 		return
 
 	var safe_division: int = maxi(h_division, 2)

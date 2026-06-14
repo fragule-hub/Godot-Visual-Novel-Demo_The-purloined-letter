@@ -1,0 +1,38 @@
+{
+  "categories": [
+    {
+      "name": "Team",
+      "size": 40,
+      "entries": [
+        { "name": "耀光", "size": 40 }
+      ]
+    },
+    {
+      "name": "Art",
+      "entries": [
+        { "name": "Au Crowne", "link": "https://aucrowne.itch.io/", "link_text": "aucrowne.itch.io" },
+        { "name": "Memmo", "link": "https://memmoxt.itch.io/", "link_text": "memmoxt.itch.io" }
+      ]
+    },
+    {
+      "name": "Music",
+      "entries": [
+        { "name": "乌鸦Producer", "link": "https://space.bilibili.com/10042989", "link_text": "bilibili" }
+      ]
+    },
+    {
+      "name": "Programming",
+      "entries": [
+        { "name": "godot konado plugin", "link": "https://github.com/godothub/konado", "link_text": "GitHub" }
+      ]
+    },
+    {
+      "name": "Fonts",
+      "entries": [
+        { "name": "Alibaba PuHuiTi by Alibaba Group" },
+        { "name": "Resource Han Rounded by FORLONG FONT — OFL 1.1" },
+        { "name": "Source Han Serif by Adobe / Google — OFL 1.1" }
+      ]
+    }
+  ]
+}

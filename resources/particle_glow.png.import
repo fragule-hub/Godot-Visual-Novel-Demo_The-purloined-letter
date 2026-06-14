@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cvwi03rjgj4q"
-path="res://.godot/imported/base.png-6f25ed855a50545a705bd1bf077c098c.ctex"
+uid="uid://diwdpnac3b1jr"
+path="res://.godot/imported/particle_glow.png-3eaa55c4348b7c0e10a15053a5715821.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/立绘/clara/layers/center/hair_under/base.png"
-dest_files=["res://.godot/imported/base.png-6f25ed855a50545a705bd1bf077c098c.ctex"]
+source_file="res://resources/particle_glow.png"
+dest_files=["res://.godot/imported/particle_glow.png-3eaa55c4348b7c0e10a15053a5715821.ctex"]
 
 [params]
 
