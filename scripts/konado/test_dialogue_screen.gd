@@ -6,11 +6,15 @@ var _inline_processor: InlineCommandProcessor
 var _backlog_overlay: KND_OverlayPanel
 var _backlog_panel: BacklogPanel
 var _save_overlay: KND_OverlayPanel
+var _game_started := false
 
 
 func _ready() -> void:
 	if not dialogue_manager:
 		return
+
+	# 禁用自动启动，等待 SceneTransition 过渡完成后再开始对话
+	dialogue_manager.autostart = false
 
 	dialogue_manager.custom_signal.connect(func(c): print("Konado signal: ", c))
 	dialogue_manager.shot_end.connect(func(): print("Dialogue finished"))
@@ -79,17 +83,35 @@ func _ready() -> void:
 		bridge.settings_panel_opened.connect(_on_panel_opened)
 		bridge.settings_panel_closed.connect(_on_panel_closed)
 
-	# ── 从标题界面加载存档 ──
+	# ── 等待过渡完成后再启动游戏 ──
+	if SceneTransition.is_transitioning():
+		SceneTransition.transition_finished.connect(_start_game)
+		# 防御：过渡异常时最多等 3 秒
+		get_tree().create_timer(3.0).timeout.connect(func():
+			if not _game_started:
+				_start_game()
+		)
+	else:
+		_start_game()
+
+
+func _start_game() -> void:
+	if _game_started:
+		return
+	_game_started = true
+
+	# 从标题界面加载存档（同步加载，先恢复状态再开始对话）
 	if GameState.pending_save_id >= 0:
 		var save_id: int = GameState.pending_save_id
 		GameState.pending_save_id = -1
-		dialogue_manager.save_system.load_game.call_deferred(save_id)
+		dialogue_manager.save_system.load_game(save_id)
+
+	dialogue_manager.start_dialogue()
 
 
 func _input(event: InputEvent) -> void:
 	if _is_any_panel_open():
 		return
-	# 滚轮上滑 → 打开回顾，消费事件防止触发对话推进
 	if event is InputEventMouseButton \
 			and event.button_index == MOUSE_BUTTON_WHEEL_UP:
 		_backlog_overlay.open()
@@ -110,11 +132,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		_backlog_overlay.open()
 
 
-# ============================================================
-# 面板状态管理
-# ============================================================
-
-## 返回当前可见的最顶层 overlay（Esc 关闭优先级：设置 > 存档 > 回顾）
 func _get_top_panel() -> KND_OverlayPanel:
 	if dialogue_manager and dialogue_manager._settings_bridge:
 		var bridge = dialogue_manager._settings_bridge
@@ -146,4 +163,4 @@ func _on_panel_closed() -> void:
 
 
 func _on_return_to_title() -> void:
-	get_tree().change_scene_to_file("res://scenes/ui/title_screen.tscn")
+	SceneTransition.change_scene("res://scenes/ui/title_screen.tscn", SceneTransition.Effect.FADE)

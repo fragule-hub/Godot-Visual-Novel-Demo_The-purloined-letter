@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 KND_Settings="*uid://crc32ueqs8u1w"
 GameState="*res://scripts/ui/game_state.gd"
 BgmManager="*res://autoplay/bgm_manager.gd"
+SceneTransition="*res://autoplay/scene_transition.gd"
 
 [display]
 

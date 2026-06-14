@@ -1,0 +1,14 @@
+[remap]
+
+importer="konado.scripts"
+type="Resource"
+uid="uid://bridwov2pgvwh"
+path="res://.godot/imported/chapter2.ks-e2240b1575e117bccde827764f06274b.res"
+
+[deps]
+
+source_file="res://story/chapter2.ks"
+dest_files=["res://.godot/imported/chapter2.ks-e2240b1575e117bccde827764f06274b.res"]
+
+[params]
+

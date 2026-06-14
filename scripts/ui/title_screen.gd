@@ -89,7 +89,7 @@ func _connect_buttons() -> void:
 # ============================================================
 
 func _on_new_game() -> void:
-	get_tree().change_scene_to_file("res://scenes/konado/test_dialogue_screen.tscn")
+	SceneTransition.change_scene("res://scenes/konado/test_dialogue_screen.tscn", SceneTransition.Effect.CURTAIN)
 
 
 func _on_continue() -> void:
@@ -130,8 +130,10 @@ func _override_save_slot_load_behavior(save_panel: ProjectSavePanel) -> void:
 
 
 func _on_save_slot_load(save_id: int) -> void:
+	_save_overlay.close()
 	GameState.pending_save_id = save_id
-	get_tree().change_scene_to_file("res://scenes/konado/test_dialogue_screen.tscn")
+	await _save_overlay.closed
+	SceneTransition.change_scene("res://scenes/konado/test_dialogue_screen.tscn", SceneTransition.Effect.IRIS)
 
 
 func _on_settings() -> void:
@@ -141,6 +143,7 @@ func _on_settings() -> void:
 
 	var panel: ProjectSettingsPanel = preload(
 		"res://scenes/ui/project_settings_panel.tscn").instantiate()
+	panel.show_return_btn = false
 	panel._overlay = settings_overlay
 	settings_overlay.content = panel
 	settings_overlay.open()
