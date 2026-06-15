@@ -5,6 +5,9 @@ class_name InlineCommandProcessor
 ## 解析对话文本中的 {tag:value} 标签，在打字过程中按位置触发命令
 ## 支持命令：change（切换立绘）、wait（暂停）、speed（变速）、wait_pause（省略号停顿）
 
+## 调试日志开关
+const DEBUG_LOG := false
+
 var _dialogue_manager: KND_DialogueManager
 var _dialogue_box: KND_DialogueBox
 var _acting_interface: KND_ActingInterface
@@ -42,6 +45,15 @@ func _init(dm: KND_DialogueManager, db: KND_DialogueBox, ai: KND_ActingInterface
 
 ## 入口：每行对话开始时调用
 func start_line(content: String, chara_id: String) -> void:
+	# 清理上任一行遗留的省略号状态（仅当确实激活过）
+	if _ellipsis_active:
+		if _ellipsis_cycle_timer:
+			_ellipsis_cycle_timer.stop()
+			_ellipsis_cycle_timer.queue_free()
+			_ellipsis_cycle_timer = null
+		_ellipsis_active = false
+		_dialogue_box.hide_ellipsis()
+
 	var parsed := _parse_tags(content)
 	_commands = parsed.commands
 	_next_cmd_index = 0
@@ -96,7 +108,7 @@ func _connect_typing_monitor() -> void:
 		if _commands.size() > 0:
 			_suppress_typing_completed = true
 		await get_tree().process_frame
-		print("[ICP] _connect_typing_monitor: frame elapsed, typing_tween valid=%s, visible_ratio=%.3f" % [
+		if DEBUG_LOG: print("[ICP] _connect_typing_monitor: frame elapsed, typing_tween valid=%s, visible_ratio=%.3f" % [
 			_dialogue_box.typing_tween != null and _dialogue_box.typing_tween.is_valid(),
 			_dialogue_box.dialogue_label.visible_ratio
 		])
@@ -108,12 +120,12 @@ func _takeover_traditional_tween() -> void:
 	if _commands.is_empty():
 		return  # 无命令时透传 manager 的 tween，不做任何干预
 	var db_tween := _dialogue_box.typing_tween
-	print("[ICP] _takeover: db_tween valid=%s, visible_ratio=%.3f" % [db_tween != null and db_tween.is_valid(), _dialogue_box.dialogue_label.visible_ratio])
+	if DEBUG_LOG: print("[ICP] _takeover: db_tween valid=%s, visible_ratio=%.3f" % [db_tween != null and db_tween.is_valid(), _dialogue_box.dialogue_label.visible_ratio])
 	if db_tween and db_tween.is_valid():
 		_taking_over = true
 		_dialogue_box.typing_tween.kill()  # _taking_over 阻止 finished 信号泄漏到 manager
 		_taking_over = false
-		print("[ICP]   killed manager tween")
+		if DEBUG_LOG: print("[ICP]   killed manager tween")
 		var label := _dialogue_box.dialogue_label
 		var current_ratio := label.visible_ratio
 		var remaining_chars := _total_chars - int(current_ratio * float(_total_chars))
@@ -123,9 +135,9 @@ func _takeover_traditional_tween() -> void:
 		_active_tween.tween_property(label, "visible_ratio", 1.0, remaining_time) \
 			.set_trans(Tween.TRANS_LINEAR)
 		_dialogue_box.typing_tween = _active_tween
-		print("[ICP]   created _active_tween from ratio %.3f, remaining=%d, time=%.2f" % [current_ratio, remaining_chars, remaining_time])
+		if DEBUG_LOG: print("[ICP]   created _active_tween from ratio %.3f, remaining=%d, time=%.2f" % [current_ratio, remaining_chars, remaining_time])
 	else:
-		print("[ICP]   NO manager tween found — this is the race condition!")
+		if DEBUG_LOG: print("[ICP]   NO manager tween found — this is the race condition!")
 		var label := _dialogue_box.dialogue_label
 		var remaining_chars := _total_chars - int(label.visible_ratio * float(_total_chars))
 		var remaining_time := remaining_chars * _default_typing_interval
@@ -134,7 +146,7 @@ func _takeover_traditional_tween() -> void:
 		_active_tween.tween_property(label, "visible_ratio", 1.0, remaining_time) \
 			.set_trans(Tween.TRANS_LINEAR)
 		_dialogue_box.typing_tween = _active_tween
-		print("[ICP]   created _active_tween (else branch), remaining=%d, time=%.2f" % [remaining_chars, remaining_time])
+		if DEBUG_LOG: print("[ICP]   created _active_tween (else branch), remaining=%d, time=%.2f" % [remaining_chars, remaining_time])
 	# manager tween 已被 kill，_active_tween 是唯一活跃 tween，重置 suppress
 	_suppress_typing_completed = false
 
@@ -167,7 +179,7 @@ func _check_commands_at(current_pos: int) -> void:
 		var cmd: Dictionary = _commands[_next_cmd_index]
 		if cmd.pos > current_pos:
 			break
-		print("[ICP] exec cmd[%d] '%s' pos=%d at char=%d" % [_next_cmd_index, cmd.type, cmd.pos, current_pos])
+		if DEBUG_LOG: print("[ICP] exec cmd[%d] '%s' pos=%d at char=%d" % [_next_cmd_index, cmd.type, cmd.pos, current_pos])
 		_execute_command(cmd)
 		_next_cmd_index += 1
 
@@ -210,13 +222,36 @@ func _execute_change(params: String) -> void:
 	if actor_node == null:
 		push_warning("change 标签：角色 '%s' 未找到" % actor_name)
 		return
-	# 优先使用 fade_apply_state（渐变切换），回退到 apply_state
-	if actor_node.has_method("fade_apply_state"):
+
+	# 更新 acting_interface 中的角色状态记录
+	if _acting_interface.actor_dict.has(actor_name):
+		_acting_interface.actor_dict[actor_name]["state"] = state
+
+	if actor_node.has_method("fade_set_character_texture"):
+		# SimplePortraitActor（Eve 等单图角色）：需要从配置表解析状态名→纹理
+		var state_tex: Texture = _resolve_state_texture(actor_name, state)
+		if state_tex == null:
+			push_warning("change 标签：角色 '%s' 的状态 '%s' 未找到对应纹理" % [actor_name, state])
+			return
+		actor_node.call("fade_set_character_texture", state_tex)
+	elif actor_node.has_method("fade_apply_state"):
+		# CompositePortraitActor（Clara 等组件化角色）：直接传 state_text，由内部 codec 解析
 		actor_node.call("fade_apply_state", state)
-	elif actor_node.has_method("apply_state"):
-		actor_node.call("apply_state", state)
 	else:
 		push_warning("change 标签：角色 '%s' 不支持状态切换" % actor_name)
+
+
+## 从角色配置表解析状态名到纹理资源
+func _resolve_state_texture(actor_name: String, state_name: String) -> Texture:
+	var chara_list = _dialogue_manager.chara_list
+	if chara_list == null:
+		return null
+	for chara in chara_list.characters:
+		if chara.chara_name == actor_name:
+			for state in chara.chara_status:
+				if state.status_name == state_name:
+					return state.status_texture
+	return null
 
 
 ## 立绘跳动
@@ -279,7 +314,7 @@ func _execute_wait_pause(seconds: float, max_dots: int, cmd_pos: int) -> void:
 	_ellipsis_max_dots = max_dots
 	_ellipsis_current = 1
 	_ellipsis_cmd_pos = cmd_pos
-	print("[ICP] _execute_wait_pause: seconds=%.1f max_dots=%d visible_ratio=%.3f" % [seconds, max_dots, _dialogue_box.dialogue_label.visible_ratio])
+	if DEBUG_LOG: print("[ICP] _execute_wait_pause: seconds=%.1f max_dots=%d visible_ratio=%.3f" % [seconds, max_dots, _dialogue_box.dialogue_label.visible_ratio])
 	if _is_fade_in_mode():
 		_typewriter._playing = false
 	else:
@@ -297,11 +332,15 @@ func _execute_wait_pause(seconds: float, max_dots: int, cmd_pos: int) -> void:
 
 ## 省略号最小等待时间到
 func _on_ellipsis_wait_done() -> void:
+	if not _ellipsis_active:
+		return
 	_ellipsis_wait_done = true
 
 
 ## 省略号循环
 func _cycle_ellipsis() -> void:
+	if not _ellipsis_active:
+		return
 	_ellipsis_current += 1
 	if _ellipsis_current > _ellipsis_max_dots:
 		_ellipsis_current = 1
@@ -350,7 +389,7 @@ func _resume_traditional() -> void:
 	var label := _dialogue_box.dialogue_label
 	var remaining_chars := _total_chars - int(label.visible_ratio * float(_total_chars))
 	var remaining_time := remaining_chars * _default_typing_interval
-	print("[ICP] _resume_traditional: ratio=%.3f remaining=%d time=%.3f active_tween_valid=%s" % [
+	if DEBUG_LOG: print("[ICP] _resume_traditional: ratio=%.3f remaining=%d time=%.3f active_tween_valid=%s" % [
 		label.visible_ratio, remaining_chars, remaining_time,
 		_active_tween != null and _active_tween.is_valid()
 	])
@@ -360,7 +399,7 @@ func _resume_traditional() -> void:
 	# 重置 suppress：原始 manager tween 已在 takeover 时被杀，后续完成不应被抑制
 	_suppress_typing_completed = false
 	if remaining_chars <= 0:
-		print("[ICP]   already at end → emit immediately (deferred)")
+		if DEBUG_LOG: print("[ICP]   already at end → emit immediately (deferred)")
 		_dialogue_box.typing_completed.emit.call_deferred()
 		return
 	_active_tween = get_tree().create_tween()
@@ -373,7 +412,7 @@ func _resume_traditional() -> void:
 ## 变速（传统模式）：从当前位置用新速度重建 tween
 func _restart_traditional_tween(interval: float) -> void:
 	var label := _dialogue_box.dialogue_label
-	print("[ICP] _restart_tween: interval=%.3f, visible_ratio=%.3f, total_chars=%d" % [interval, label.visible_ratio, _total_chars])
+	if DEBUG_LOG: print("[ICP] _restart_tween: interval=%.3f, visible_ratio=%.3f, total_chars=%d" % [interval, label.visible_ratio, _total_chars])
 	if _active_tween and _active_tween.is_valid():
 		_active_tween.kill()
 	var remaining_chars := _total_chars - int(label.visible_ratio * float(_total_chars))
@@ -383,7 +422,7 @@ func _restart_traditional_tween(interval: float) -> void:
 	_active_tween.tween_property(label, "visible_ratio", 1.0, remaining_time) \
 		.set_trans(Tween.TRANS_LINEAR)
 	_dialogue_box.typing_tween = _active_tween
-	print("[ICP]   new tween: remaining=%d, time=%.3f" % [remaining_chars, remaining_time])
+	if DEBUG_LOG: print("[ICP]   new tween: remaining=%d, time=%.3f" % [remaining_chars, remaining_time])
 
 
 # ============================================================
@@ -397,7 +436,7 @@ func _is_fade_in_mode() -> bool:
 ## 打字完成回调（拦截 dialogue_box.typing_completed）
 ## 发射 dialogue_box.typing_completed 以触发 dialogue_manager 的 isfinishtyping
 func _on_typing_completed() -> void:
-	print("[ICP] _on_typing_completed: suppress=%s, paused=%s, in_handler=%s, taking_over=%s, cmd_idx=%d/%d" % [
+	if DEBUG_LOG: print("[ICP] _on_typing_completed: suppress=%s, paused=%s, in_handler=%s, taking_over=%s, cmd_idx=%d/%d" % [
 		_suppress_typing_completed, _paused, _in_typing_handler, _taking_over, _next_cmd_index, _commands.size()
 	])
 	if _in_typing_handler:
@@ -408,20 +447,20 @@ func _on_typing_completed() -> void:
 	if _suppress_typing_completed:
 		_suppress_typing_completed = false
 		if _paused:
-			print("[ICP]   suppress + paused (tween finished mid-wait) → ignore")
+			if DEBUG_LOG: print("[ICP]   suppress + paused (tween finished mid-wait) → ignore")
 		else:
-			print("[ICP]   suppress consumed (manager tween) → NOT emitting")
+			if DEBUG_LOG: print("[ICP]   suppress consumed (manager tween) → NOT emitting")
 	elif _paused:
-		print("[ICP]   paused without suppress (speed tween finished mid-wait) → NOT emitting")
+		if DEBUG_LOG: print("[ICP]   paused without suppress (speed tween finished mid-wait) → NOT emitting")
 	else:
 		# 修复时序竞争：tween 回调可能在 _process 执行最后命令之前触发
 		# 这里强制追赶到 total_chars，确保所有命令在判断之前执行完毕
 		_check_commands_at(_total_chars)
 		if _next_cmd_index >= _commands.size():
-			print("[ICP]   all commands done → emit typing_completed")
+			if DEBUG_LOG: print("[ICP]   all commands done → emit typing_completed")
 			_dialogue_box.typing_completed.emit()
 		else:
-			print("[ICP]   commands remaining (%d/%d) → NOT emitting" % [_next_cmd_index, _commands.size()])
+			if DEBUG_LOG: print("[ICP]   commands remaining (%d/%d) → NOT emitting" % [_next_cmd_index, _commands.size()])
 	_in_typing_handler = false
 
 

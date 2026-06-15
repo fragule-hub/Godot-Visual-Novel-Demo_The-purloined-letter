@@ -2,6 +2,9 @@ extends Node
 class_name KND_SaveSystem
 
 ## KND_SaveSystem
+
+## 调试日志开关
+const DEBUG_LOG := false
 ##
 ## 基于快照原理的存档系统核心类，负责创建、存储和恢复游戏状态的快照
 ## 支持对话系统的存档/读档功能，与现有对话管理系统无缝集成
@@ -172,6 +175,15 @@ func load_game(save_id: int) -> bool:
 			dialogue_manager.variable_store = KND_VariableStore.new()
 			dialogue_manager.variable_store.from_dict(save_data.variables)
 	
+	# 读档恢复完成后的打字机处理
+	if dialogue_manager._konado_dialogue_box:
+		var box = dialogue_manager._konado_dialogue_box
+		# _restore_dialogue_state 设文字触发了 update_dialogue_content，
+		# 其异步 tween 会在演员恢复期间启动，读档后直接显示全文
+		if box.typing_tween and box.typing_tween.is_valid():
+			box.typing_tween.kill()
+		box.dialogue_label.visible_ratio = 1.0
+	
 	print("读档成功: " + save_path)
 	load_completed.emit(save_id, true)
 	return true
@@ -231,35 +243,29 @@ func _auto_save() -> void:
 ## 捕获对话状态
 func _capture_dialogue_state() -> Dictionary:
 	var state = {}
-	
+	var pre := dialogue_manager._pre_break_save
+	var use_pre := not pre.is_empty()
+
 	# 保存当前镜头
 	if dialogue_manager.cur_dialogue_shot:
-		var shot_path = dialogue_manager.cur_dialogue_shot.ks_path
-		state["shot_path"] = shot_path
-		print("保存镜头路径: " + shot_path)
-	else:
-		print("当前镜头为空，未保存shot_path")
-	
-	# 保存当前对话节点ID
-	state["current_node_id"] = dialogue_manager.cur_node_id
-	
+		state["shot_path"] = dialogue_manager.cur_dialogue_shot.ks_path
+
+	# node_id：有转场快照时用快照的（跳过 scene_break），否则用当前的
+	state["current_node_id"] = pre["node_id"] if use_pre else dialogue_manager.cur_node_id
+
 	# 保存对话状态
 	state["dialogue_state"] = dialogue_manager.dialogueState
-	
-	# 保存当前对话内容（从对话框中获取）
+
+	# 保存当前对话内容：有快照时用快照的（当前已被清空）
 	if dialogue_manager._konado_dialogue_box:
-		state["current_dialog_content"] = dialogue_manager._konado_dialogue_box.dialogue_text
-		state["current_character_name"] = dialogue_manager._konado_dialogue_box.character_name
-		print("保存对话内容: " + dialogue_manager._konado_dialogue_box.dialogue_text)
-		print("保存角色名称: " + dialogue_manager._konado_dialogue_box.character_name)
+		state["current_dialog_content"] = pre.get("dialogue_text", "") if use_pre else dialogue_manager._konado_dialogue_box.dialogue_text
+		state["current_character_name"] = pre.get("character_name", "") if use_pre else dialogue_manager._konado_dialogue_box.character_name
 	else:
-		# 如果对话框不存在，尝试从当前镜头的对话列表中获取
 		if dialogue_manager.cur_dialogue_shot:
 			var current_dialog = dialogue_manager._current_dialogue()
 			if current_dialog and current_dialog.dialog_content:
 				state["current_dialog_content"] = current_dialog.dialog_content
-				print("保存对话内容: " + current_dialog.dialog_content)
-	
+
 	return state
 
 ## 恢复对话状态
@@ -289,64 +295,43 @@ func _restore_dialogue_state(state: Dictionary) -> void:
 	if dialogue_manager._konado_dialogue_box:
 		if state.has("current_dialog_content"):
 			dialogue_manager._konado_dialogue_box.dialogue_text = state["current_dialog_content"]
-			print("恢复对话内容: " + state["current_dialog_content"])
+			if DEBUG_LOG: print("恢复对话内容: " + state["current_dialog_content"])
 		if state.has("current_character_name"):
 			dialogue_manager._konado_dialogue_box.character_name = state["current_character_name"]
-			print("恢复角色名称: " + state["current_character_name"])
+			if DEBUG_LOG: print("恢复角色名称: " + state["current_character_name"])
 
 ## 捕获音频状态
 func _capture_audio_state() -> Dictionary:
 	var state = {}
-	
+
 	if dialogue_manager and dialogue_manager._audio_interface:
 		var audio_interface = dialogue_manager._audio_interface
-		print("捕获音频状态")
-		
+
 		# 保存BGM状态（使用 BgmManager autoload，跨场景持久化）
 		var bgm_stream: AudioStream = BgmManager.get_current_stream()
 		if bgm_stream:
 			state["bgm"] = {
 				"stream_path": bgm_stream.resource_path,
 				"is_playing": BgmManager.is_playing(),
-				"volume_db": 0.0  # volume_db 由 BgmManager 动态计算，存档时不保存
+				"volume_db": 0.0
 			}
-			print("保存BGM状态：" + str(state["bgm"]))
-		else:
-			print("BGM播放器无流")
-		
+
 		# 保存语音状态
-		if audio_interface.voice_player:
-			print("语音播放器存在")
-			if audio_interface.voice_player.stream:
-				state["voice"] = {
-					"stream_path": audio_interface.voice_player.stream.resource_path,
-					"is_playing": audio_interface.voice_player.is_playing(),
-					"volume_db": audio_interface.voice_player.volume_db
-				}
-				print("保存语音状态：" + str(state["voice"]))
-			else:
-				print("语音播放器无流")
-		else:
-			print("语音播放器不存在")
-		
+		if audio_interface.voice_player and audio_interface.voice_player.stream:
+			state["voice"] = {
+				"stream_path": audio_interface.voice_player.stream.resource_path,
+				"is_playing": audio_interface.voice_player.is_playing(),
+				"volume_db": audio_interface.voice_player.volume_db
+			}
+
 		# 保存音效状态
-		if audio_interface.sound_effect_player:
-			print("音效播放器存在")
-			if audio_interface.sound_effect_player.stream:
-				state["sound_effect"] = {
-					"stream_path": audio_interface.sound_effect_player.stream.resource_path,
-					"is_playing": audio_interface.sound_effect_player.is_playing(),
-					"volume_db": audio_interface.sound_effect_player.volume_db
-				}
-				print("保存音效状态：" + str(state["sound_effect"]))
-			else:
-				print("音效播放器无流")
-		else:
-			print("音效播放器不存在")
-	else:
-		print("对话管理器或音频接口不存在")
-	
-	print("最终捕获的音频状态：" + str(state))
+		if audio_interface.sound_effect_player and audio_interface.sound_effect_player.stream:
+			state["sound_effect"] = {
+				"stream_path": audio_interface.sound_effect_player.stream.resource_path,
+				"is_playing": audio_interface.sound_effect_player.is_playing(),
+				"volume_db": audio_interface.sound_effect_player.volume_db
+			}
+
 	return state
 
 ## 恢复音频状态
@@ -395,35 +380,37 @@ func _restore_audio_state(state: Dictionary) -> void:
 ## 捕获演员状态
 func _capture_actor_state() -> Dictionary:
 	var state = {}
-	
-	if dialogue_manager and dialogue_manager._acting_interface:
+	var pre := dialogue_manager._pre_break_save
+	var use_pre := not pre.is_empty()
+
+	if use_pre:
+		state["actors"] = []
+		for actor_id in pre["actors"].keys():
+			var actor_data = pre["actors"][actor_id]
+			state["actors"].append({
+				"id": actor_id,
+				"h_division": actor_data.get("h_division", 6),
+				"pos_h": actor_data.get("pos", 0),
+				"state": actor_data.get("state", ""),
+				"c_scale": actor_data.get("c_scale", 1.0),
+				"mirror": actor_data.get("mirror", false)
+			})
+	elif dialogue_manager and dialogue_manager._acting_interface:
 		var acting_interface = dialogue_manager._acting_interface
 		state["actors"] = []
-		
-		# 保存所有演员的状态
-		print("捕获演员状态，演员数量：" + str(acting_interface.actor_dict.size()))
 		for actor_id in acting_interface.actor_dict.keys():
-			print("处理演员：" + actor_id)
 			var actor_data = acting_interface.actor_dict[actor_id]
 			var actor_node = acting_interface.get_chara_node(actor_id)
-			
 			if actor_node:
-				var actor_state = {
+				state["actors"].append({
 					"id": actor_id,
 					"h_division": actor_data.get("h_division", 6),
 					"pos_h": actor_data.get("pos", 0),
 					"state": actor_data.get("state", ""),
 					"c_scale": actor_data.get("c_scale", 1.0),
 					"mirror": actor_data.get("mirror", false)
-				}
-				state["actors"].append(actor_state)
-				print("保存演员状态：" + str(actor_state))
-			else:
-				print("未找到演员节点：" + actor_id)
-		if acting_interface.actor_dict.size() == 0:
-			print("演员字典中无数据")
-	
-	print("最终捕获的演员状态：" + str(state))
+				})
+
 	return state
 
 ## 恢复演员状态
@@ -478,21 +465,19 @@ func _restore_actor_state(state: Dictionary) -> void:
 ## 捕获背景状态
 func _capture_background_state() -> Dictionary:
 	var state = {}
-	
-	if dialogue_manager and dialogue_manager._acting_interface:
+	var pre := dialogue_manager._pre_break_save
+	var use_pre := not pre.is_empty()
+
+	if use_pre:
+		state["background_id"] = pre["background_id"]
+		if pre["background_texture"]:
+			state["background_texture_path"] = pre["background_texture"].resource_path
+	elif dialogue_manager and dialogue_manager._acting_interface:
 		var acting_interface = dialogue_manager._acting_interface
-		print("捕获背景状态")
 		state["background_id"] = acting_interface.background_id
-		print("背景ID：" + acting_interface.background_id)
 		if acting_interface.current_texture:
 			state["background_texture_path"] = acting_interface.current_texture.resource_path
-			print("背景纹理路径：" + acting_interface.current_texture.resource_path)
-		else:
-			print("当前背景纹理为空")
-	else:
-		print("对话管理器或表演接口不存在")
-	
-	print("最终捕获的背景状态：" + str(state))
+
 	return state
 
 ## 恢复背景状态

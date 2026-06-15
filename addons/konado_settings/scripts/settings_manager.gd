@@ -52,7 +52,25 @@ func set_setting(category: String, key: String, value: Variant) -> void:
 	_values[category][key] = value
 	_config.set_value(category, key, value)
 	_config.save(SAVE_PATH)
+
+	# 全屏切换在 autoload 层立即执行，不依赖特定场景
+	if category == "display" and key == "fullscreen":
+		_apply_fullscreen_mode(value)
+
 	setting_changed.emit(category, key, value)
+
+
+## 根据配置恢复全屏状态（启动时调用）
+func _apply_fullscreen() -> void:
+	var fullscreen: bool = _values.get("display", {}).get("fullscreen", false)
+	_apply_fullscreen_mode(fullscreen)
+
+
+func _apply_fullscreen_mode(enable: bool) -> void:
+	if enable:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 
 ## 在运行时注册额外的设置分类
 ## @param cat: 要注册的设置分类
@@ -136,6 +154,7 @@ func _ready() -> void:
 	_detect_platform()  # 检测当前平台
 	_load_defaults()    # 加载默认设置
 	_load_saved()       # 加载已保存的设置
+	_apply_fullscreen() # 启动时根据配置恢复全屏状态
 
 ## 检测当前运行平台
 func _detect_platform() -> void:

@@ -56,6 +56,8 @@ enum Type {
 	OP_ASSIGN,         ## =
 	COLON,             ## :
 
+	KW_SCENE_BREAK,    ## scene_break
+
 	# 结构
 	INDENT,            ## 缩进标记
 	NEWLINE,           ## 行结束
@@ -95,6 +97,7 @@ const KEYWORDS: Dictionary = {
 	"increment": Type.KW_INCREMENT,
 	"set_flag": Type.KW_SET_FLAG,
 	"scale": Type.KW_SCALE,
+	"scene_break": Type.KW_SCENE_BREAK,
 }
 
 var type: Type

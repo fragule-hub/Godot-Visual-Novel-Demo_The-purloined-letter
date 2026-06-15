@@ -4,6 +4,9 @@ extends Node
 ## 跨场景持久化 BGM 播放，不随 change_scene_to_file 中断。
 ## 直接订阅 KND_Settings.setting_changed 实时响应音量变化。
 
+## BGM 淡出完成信号
+signal bgm_fade_finished
+
 var _player: AudioStreamPlayer
 var _fade_tween: Tween
 var _current_path: String = ""
@@ -59,9 +62,13 @@ func stop(fade_duration: float = 0.3) -> void:
 	if fade_duration > 0.0 and _player.playing:
 		_fade_tween = create_tween()
 		_fade_tween.tween_property(_player, "volume_db", -80.0, fade_duration)
-		_fade_tween.finished.connect(_player.stop)
+		_fade_tween.finished.connect(func():
+			_player.stop()
+			bgm_fade_finished.emit()
+		)
 	else:
 		_player.stop()
+		bgm_fade_finished.emit()
 	_current_path = ""
 
 

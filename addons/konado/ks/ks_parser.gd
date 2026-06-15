@@ -113,6 +113,8 @@ func _parse_statement() -> KS_AST.ASTNode:
 			return _parse_achievement()
 		KS_Token.Type.KW_END:
 			return _parse_end()
+		KS_Token.Type.KW_SCENE_BREAK:
+			return _parse_scene_break()
 
 	_error("无法识别的语法：%s" % str(tok))
 	return null
@@ -519,12 +521,40 @@ func _parse_jump() -> KS_AST.JumpNode:
 	node.line = _peek().line
 	_advance()  # 跳过 jump
 
-	# 收集行末所有 token 拼成完整路径
-	var parts: PackedStringArray = []
+	# 收集行末所有 token，记录最后 token 信息
+	var all_tokens: Array = []
 	while not _at_line_end():
-		var t := _advance()
-		parts.append(str(t.value))
-	node.target_path = "".join(parts)
+		all_tokens.append(_advance())
+
+	if all_tokens.is_empty():
+		_error("jump 缺少目标路径")
+		return null
+
+	var last_tok: KS_Token = all_tokens[all_tokens.size() - 1]
+	var last_str := str(last_tok.value)
+
+	# 如果最后 token 是已知效果关键字 → 分离
+	var known_effects := ["none", "erase", "blinds", "wave", "fade", "vortex", "windmill", "cyberglitch"]
+	if last_str in known_effects and all_tokens.size() >= 2:
+		node.effect = last_str
+		# 用最后 token 的列号计算路径截断点
+		# token.column 是 1-indexed，基于已去除缩进的行，无需再减缩进偏移
+		var split_pos: int = last_tok.column - 1
+		# 拼接 split_pos 之前的所有 token 作为路径
+		var path_parts: PackedStringArray = []
+		for i in range(all_tokens.size() - 1):
+			path_parts.append(str(all_tokens[i].value))
+		var full_path := "".join(path_parts)
+		# 从拼接结果截取到 split_pos
+		if split_pos >= 0 and split_pos < full_path.length():
+			full_path = full_path.substr(0, split_pos)
+		node.target_path = full_path.strip_edges()
+	else:
+		# 无效果参数 → 整体作为路径
+		var parts: PackedStringArray = []
+		for t in all_tokens:
+			parts.append(str(t.value))
+		node.target_path = "".join(parts)
 
 	if node.target_path.is_empty():
 		_error("jump 缺少目标路径")
@@ -624,6 +654,24 @@ func _parse_end() -> KS_AST.EndNode:
 	var node := KS_AST.EndNode.new()
 	node.line = _peek().line
 	_advance()  # 跳过 end
+	_skip_to_next_line()
+	return node
+
+
+func _parse_scene_break() -> KS_AST.SceneBreakNode:
+	var node := KS_AST.SceneBreakNode.new()
+	node.line = _peek().line
+	_advance()  # 跳过 scene_break
+	# 可选：背景名
+	if not _at_line_end():
+		var bg_tok := _peek()
+		if bg_tok.type == KS_Token.Type.IDENTIFIER or bg_tok.type == KS_Token.Type.STRING_LITERAL:
+			node.target_bg = str(_advance().value)
+	# 可选：过渡效果
+	if not _at_line_end():
+		var eff_tok := _peek()
+		if eff_tok.type == KS_Token.Type.IDENTIFIER:
+			node.effect = str(_advance().value)
 	_skip_to_next_line()
 	return node
 

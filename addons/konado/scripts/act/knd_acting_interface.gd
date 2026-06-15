@@ -3,6 +3,9 @@ class_name KND_ActingInterface
 
 ## 表演管理器
 
+## 调试日志开关
+const DEBUG_LOG := true
+
 ## 完成背景切换的信号
 signal background_change_finished
 ## 完成角色创建的信号
@@ -154,7 +157,7 @@ func clean_background(effects_type: BackgroundTransitionEffectsType) -> void:
 	var config = TRANSITION_CONFIGS.get(effects_type, TRANSITION_CONFIGS[BackgroundTransitionEffectsType.NONE_EFFECT])
 
 	_background.material.set("shader", config.shader)
-	print(_background.material.get_shader())
+	if DEBUG_LOG: print(_background.material.get_shader())
 	_background.material.set_shader_parameter("progress", 0.0)
 	_background.material.set_shader_parameter("current_texture", current_texture)
 	_background.material.set_shader_parameter("target_texture", tex)
@@ -183,7 +186,7 @@ func change_background_image(tex: Texture, name: String, effects_type: Backgroun
 
 	# 基础状态更新
 	background_id = name
-	print_rich("[color=cyan]切换背景为: [/color]"+str(name) +" " + "过渡效果: " + str(effects_type))
+	if DEBUG_LOG: print_rich("[color=cyan]切换背景为: [/color]"+str(name) +" " + "过渡效果: " + str(effects_type))
 	
 	# 获取当前效果配置
 	var config = TRANSITION_CONFIGS.get(effects_type, TRANSITION_CONFIGS[BackgroundTransitionEffectsType.NONE_EFFECT])
@@ -202,7 +205,7 @@ func change_background_image(tex: Texture, name: String, effects_type: Backgroun
 		return
 
 	_background.material.set("shader", config.shader)
-	print(_background.material.get_shader())
+	if DEBUG_LOG: print(_background.material.get_shader())
 	_background.material.set_shader_parameter("progress", 0.0)
 	_background.material.set_shader_parameter("current_texture", current_texture)
 	_background.material.set_shader_parameter("target_texture", tex)
@@ -210,13 +213,13 @@ func change_background_image(tex: Texture, name: String, effects_type: Backgroun
 	# 创建并配置过渡动画
 	effect_tween = get_tree().create_tween()
 	effect_tween.tween_property(
-		_background.material, 
-		"shader_parameter/progress", 
-		config.progress_target, 
+		_background.material,
+		"shader_parameter/progress",
+		config.progress_target,
 		config.duration
 	)
 	effect_tween.set_ease(config.tween_trans)
-	
+
 	# 动画完成回调
 	effect_tween.finished.connect(_on_transition_finished.bind(_background.material, tex))
 	effect_tween.play()
@@ -224,7 +227,7 @@ func change_background_image(tex: Texture, name: String, effects_type: Backgroun
 
 ## 过渡动画完成统一处理函数
 func _on_transition_finished(mat: ShaderMaterial, target_tex: Texture) -> void:
-	print("背景过渡动画完成")
+	if DEBUG_LOG: print("背景过渡动画完成")
 	current_texture = target_tex
 	mat.set_shader_parameter("current_texture", current_texture)
 	
@@ -279,7 +282,7 @@ func create_new_character(chara_id: String, h_division: int, pos_h: int, state: 
 	temp_node.actor_entered.connect(
 		func():
 			character_created.emit()
-			print("新建了演员："+str(chara_id)+" 演员状态："+str(state)))
+			if DEBUG_LOG: print("新建了演员："+str(chara_id)+" 演员状态："+str(state)))
 	# 移动信号
 	temp_node.actor_moved.connect(_on_character_moved)
 
@@ -296,7 +299,7 @@ func change_actor_state(actor_id: String, state_id: String, state_tex: Texture) 
 		actor_dict[actor_id]["state"] = state_id
 		chara_node.set_character_texture(state_tex)
 		character_state_changed.emit()
-		print("切换"+actor_id+"到"+str(state_id)+"状态")
+		if DEBUG_LOG: print("切换"+actor_id+"到"+str(state_id)+"状态")
 
 
 # 高亮角色
@@ -305,10 +308,20 @@ func highlight_actor(actor_id: String) -> void:
 		return
 	for actor in actor_dict.keys():
 		var tmp = get_chara_node(actor)
+		if tmp == null:
+			continue
 		if actor_id == actor:
 			tmp.set_highlight(true)
 		else:
 			tmp.set_highlight(false)
+
+
+## 所有角色恢复全亮（旁白/叙述时使用）
+func highlight_all() -> void:
+	for actor in actor_dict.keys():
+		var tmp = get_chara_node(actor)
+		if tmp:
+			tmp.set_highlight(true)
 
 #
 	#var chara_node: KND_Actor = get_chara_node(actor_id)
@@ -341,28 +354,38 @@ func delete_character(chara_id: String) -> void:
 				character_deleted.emit()
 			return
 	# 未找到匹配角色，仍需发射信号防止对话流程阻塞
-	push_warning("delete_character: '%s' 未在 actor_dict 中找到" % chara_id)
 	character_deleted.emit()
 				
 ## 删除所有演员
 func delete_all_actor() -> void:
 	actor_dict.clear()
-	# 清空演员节点字典
 	actor_nodes.clear()
-	for node in _chara_controler.get_children():
+	var children := _chara_controler.get_children()
+	if children.is_empty():
+		character_deleted.emit()
+		return
+	var _emitted := false
+	for node in children:
+		node.tree_exited.connect(func():
+			if not _emitted and _chara_controler.get_child_count() == 0:
+				_emitted = true
+				character_deleted.emit()
+		, CONNECT_ONE_SHOT)
 		node.exit_actor(false)
-	print("删除所有演员")
+	if DEBUG_LOG: print("删除所有演员")
 
 ## 移动演员的方法
 func move_actor(chara_id: String, target_h_division: int):
-	print("移动演员")
-	print(target_h_division)
+	if DEBUG_LOG: print("移动演员")
+	if DEBUG_LOG: print(target_h_division)
 	var chara_node: KND_Actor = get_chara_node(chara_id) as KND_Actor
+	if chara_node == null:
+		character_moved.emit()
+		return
 	chara_node.h_character_position = target_h_division
 
 	
 func _on_character_moved() -> void:
-	print("移动回调")
+	if DEBUG_LOG: print("移动回调")
 	character_moved.emit()
-	pass
 	

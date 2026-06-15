@@ -16,12 +16,12 @@ static func create_control(cat_id: String, item: KND_SettingItem, callback: Call
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var lbl := Label.new()
-	lbl.text = item.label
+	lbl.text = TranslationServer.translate(item.label)
 	lbl.custom_minimum_size.x = 160
 	# tooltip
 	if item.tooltip != "":
 		lbl.set_mouse_filter(Control.MOUSE_FILTER_STOP)
-		lbl.tooltip_text = item.tooltip
+		lbl.tooltip_text = TranslationServer.translate(item.tooltip)
 	row.add_child(lbl)
 
 	match item.type:
@@ -100,6 +100,10 @@ static func _add_option(row: HBoxContainer, cat_id: String, item: KND_SettingIte
 ## @param item: 设置项
 ## @return: 当前值或默认值
 static func _current(cat_id: String, item: KND_SettingItem) -> Variant:
+	# 全屏状态应反映实际窗口模式，而非配置文件中的存储值
+	if cat_id == "display" and item.key == "fullscreen":
+		return DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+
 	var mgr := Engine.get_singleton("KND_Settings") if Engine.has_singleton("KND_Settings") else null
 	if mgr == null:
 		# 备用方案：通过场景树自动加载访问

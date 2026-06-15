@@ -82,6 +82,7 @@ class VariableNode extends ASTNode:
 ## 跳转镜头节点
 class JumpNode extends ASTNode:
 	var target_path: String = ""
+	var effect: String = ""       ## 过渡效果关键字（可选，默认 fade）
 
 
 ## 跳转分支节点
@@ -105,3 +106,8 @@ class AchievementNode extends ASTNode:
 ## 结束节点
 class EndNode extends ASTNode:
 	pass
+
+## scene_break 节点
+class SceneBreakNode extends ASTNode:
+	var target_bg: String = ""    ## 目标背景名（可选）
+	var effect: String = ""       ## 过渡效果关键字（可选）

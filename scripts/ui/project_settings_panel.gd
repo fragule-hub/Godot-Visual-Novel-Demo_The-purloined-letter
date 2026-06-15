@@ -8,10 +8,29 @@ class_name ProjectSettingsPanel
 
 const SETTINGS_THEME := preload("res://resources/theme/settings_theme.tres")
 
+## JSON display_name → CSV 翻译键 映射
+const TR_CAT_MAP: Dictionary = {
+	"音频": "cat_audio",
+	"文本播放": "cat_text",
+	"画面": "cat_display",
+}
+## JSON item label → CSV 翻译键 映射（不含语言选项）
+const TR_OPT_MAP: Dictionary = {
+	"主音量": "opt_master_volume",
+	"音乐音量": "opt_music_volume",
+	"音效音量": "opt_sfx_volume",
+	"文字速度": "opt_text_speed",
+	"自动等待": "opt_auto_delay",
+	"自动模式": "opt_auto_mode",
+	"全屏": "opt_fullscreen",
+	"语言": "opt_language",
+}
+
 @onready var _tab_container: TabContainer = %TabContainer
 @onready var _reset_btn: Button = %ResetBtn
 @onready var _close_btn: Button = %CloseBtn
 @onready var _return_btn: Button = %ReturnBtn
+@onready var _title_label: Label = %Label
 
 var _confirm_dialog: ConfirmationDialog
 var _overlay: KND_OverlayPanel  ## 由外部设置
@@ -21,7 +40,7 @@ var show_return_btn: bool = true
 
 func _ready() -> void:
 	_confirm_dialog = ConfirmationDialog.new()
-	_confirm_dialog.dialog_text = "确定要将当前类别恢复为默认设置吗？"
+	_confirm_dialog.dialog_text = tr("confirm_reset")
 	_confirm_dialog.confirmed.connect(_on_reset_confirmed)
 	add_child(_confirm_dialog)
 
@@ -30,7 +49,13 @@ func _ready() -> void:
 	_return_btn.pressed.connect(_on_return_pressed)
 	_return_btn.visible = show_return_btn
 
+	_apply_localization()
 	_build_tabs()
+
+	# 订阅语言变更
+	var mgr := get_node_or_null("/root/KND_Settings")
+	if mgr and mgr.has_signal("setting_changed"):
+		mgr.setting_changed.connect(_on_setting_changed)
 
 
 func _build_tabs() -> void:
@@ -41,7 +66,8 @@ func _build_tabs() -> void:
 		var margin := MarginContainer.new()
 		margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		margin.name = cat.display_name
+		var cat_key: String = TR_CAT_MAP.get(cat.display_name, cat.display_name)
+		margin.name = tr(cat_key)
 		margin.theme = SETTINGS_THEME
 		for side in ["margin_top", "margin_left", "margin_bottom", "margin_right"]:
 			margin.add_theme_constant_override(side, 20)
@@ -58,6 +84,11 @@ func _build_tabs() -> void:
 			if "debug" in item.platforms:
 				continue
 			var row := KND_SettingsUIFactory.create_control(cat.id, item, _on_value_changed)
+			# 翻译行标签（create_control 是 addon 静态方法，无法直接使用映射）
+			var label_node := row.get_child(0) as Label
+			if label_node:
+				var lbl_key: String = TR_OPT_MAP.get(item.label, item.label)
+				label_node.text = tr(lbl_key)
 			_upgrade_toggle(row)
 			vbox.add_child(row)
 
@@ -120,3 +151,22 @@ func _on_return_pressed() -> void:
 
 func _get_mgr() -> Node:
 	return get_tree().root.get_node_or_null("KND_Settings")
+
+
+func _apply_localization() -> void:
+	_title_label.text = tr("settings_title")
+	_reset_btn.text = tr("btn_reset")
+	_close_btn.text = tr("btn_close")
+	_return_btn.text = tr("btn_return")
+	_confirm_dialog.dialog_text = tr("confirm_reset")
+
+
+func _on_setting_changed(category: String, key: String, value: Variant) -> void:
+	if category == "display" and key == "language":
+		GameState.apply_language(value)
+		_apply_localization()
+		# 重建标签页以刷新设置项标签
+		for child in _tab_container.get_children():
+			child.queue_free()
+		await get_tree().process_frame
+		_build_tabs()

@@ -45,6 +45,7 @@ theme_override_constants/separation = 10
 alignment = 2
 
 [node name="TitleLabel" type="Label" parent="MarginContainer/PanelContainer/VBoxContainer/TopBar" unique_id=2102920456]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "对话回顾"

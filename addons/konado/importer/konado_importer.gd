@@ -40,6 +40,9 @@ func _import(source_file, save_path, options, platform_variants, gen_files) -> E
 	if diadata == null:
 		printerr("Failed to process scripts")
 		return FAILED
+	if diadata.dialogues.is_empty():
+		printerr("[导入器] 警告：%s 编译结果为空（0 个对话节点）" % source_file)
+		return FAILED
 	var output_path = "%s.%s" % [save_path, _get_save_extension()]
 	var error = ResourceSaver.save(diadata, output_path,
 		ResourceSaver.FLAG_COMPRESS | ResourceSaver.FLAG_REPLACE_SUBRESOURCE_PATHS)

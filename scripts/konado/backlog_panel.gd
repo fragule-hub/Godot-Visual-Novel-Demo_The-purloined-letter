@@ -6,6 +6,7 @@ class_name BacklogPanel
 @onready var close_btn: Button = %CloseBtn
 @onready var scroll_container: ScrollContainer = %ScrollContainer
 @onready var log_container: VBoxContainer = %LogContainer
+@onready var _title_label: Label = %TitleLabel
 
 const MAX_ENTRIES := 500
 const SCROLL_SESSION_TIMEOUT_MS := 150
@@ -22,6 +23,7 @@ var _overlay: KND_OverlayPanel
 
 
 func _ready() -> void:
+	_title_label.text = tr("backlog_title")
 	close_btn.pressed.connect(_on_close_pressed)
 
 

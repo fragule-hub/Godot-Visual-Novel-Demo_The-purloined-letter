@@ -13,6 +13,9 @@ signal finish_playsoundeffect
 ## 语音播放完成
 signal voice_finish_playing
 
+## BGM淡出完成
+signal bgm_fade_finished
+
 ## BGM播放器
 @export var bgm_player: AudioStreamPlayer
 ## 对话播放器
@@ -31,6 +34,9 @@ var _sfx_volume: float = 1.0
 func _ready() -> void:
 	if _settings_bridge:
 		_update_volume_from_settings()
+	# 转发 BgmManager 淡出完成信号
+	if BgmManager.has_signal("bgm_fade_finished"):
+		BgmManager.bgm_fade_finished.connect(func(): bgm_fade_finished.emit())
 
 
 ## 从设置更新音量（仅 voice / sfx，BGM 由 BgmManager autoload 自行管理）
@@ -69,6 +75,10 @@ func play_bgm(audio: AudioStream, audio_id: String) -> void:
 ## 停止播放BGM的方法（委托 BgmManager autoload）
 func stop_bgm() -> void:
 	BgmManager.stop()
+
+## 带淡出的停止BGM
+func fade_out_bgm(duration: float = 1.0) -> void:
+	BgmManager.stop(duration)
 
 
 ## 播放语音的方法

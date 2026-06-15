@@ -85,8 +85,8 @@
 					"key": "language",
 					"label": "语言",
 					"type": 2,
-					"options": ["zh", "en", "ja"],
-					"default_value": "zh",
+					"options": ["中文", "English", "日本語"],
+					"default_value": "中文",
 					"platforms": ["all"]
 				}
 			]

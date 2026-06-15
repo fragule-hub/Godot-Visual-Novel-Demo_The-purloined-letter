@@ -91,6 +91,8 @@ func _validate_node(node: KS_AST.ASTNode, context: String) -> void:
 		_validate_achievement(node)
 	elif node is KS_AST.EndNode:
 		pass
+	elif node is KS_AST.SceneBreakNode:
+		_active_actors.clear()
 
 
 ## 验证演员操作
@@ -100,11 +102,13 @@ func _validate_actor(node: KS_AST.ActorNode, context: String) -> void:
 			if not _dep_characters.has(node.actor_name):
 				_dep_characters.append(node.actor_name)
 			if _active_actors.has(node.actor_name):
-				_error(node.line, "角色 '%s' 已存在，请检查角色名称是否重复创建" % node.actor_name)
+				_warning(node.line, "角色 '%s' 已存在，将作为状态更新处理" % node.actor_name)
 			else:
 				_active_actors.append(node.actor_name)
 		"exit":
-			if _active_actors.has(node.actor_name):
+			if node.actor_name == "all":
+				_active_actors.clear()
+			elif _active_actors.has(node.actor_name):
 				_active_actors.erase(node.actor_name)
 			else:
 				_warning(node.line, "无法移除不存在的角色 '%s'" % node.actor_name)

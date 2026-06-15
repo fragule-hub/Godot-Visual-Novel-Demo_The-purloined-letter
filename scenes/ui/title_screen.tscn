@@ -3,7 +3,7 @@
 [ext_resource type="Theme" path="res://resources/theme/title_screen_theme.tres" id="1_theme"]
 [ext_resource type="Script" uid="uid://xstrm7fk6p4l" path="res://scripts/ui/title_screen.gd" id="2_script"]
 [ext_resource type="StyleBox" path="res://resources/theme/panel_separator.tres" id="3_separator"]
-[ext_resource type="Shader" path="res://resources/title_bg.gdshader" id="4_shader"]
+[ext_resource type="Shader" uid="uid://b018aa1imuypk" path="res://resources/title_bg.gdshader" id="4_shader"]
 [ext_resource type="Texture2D" uid="uid://diwdpnac3b1jr" path="res://resources/particle_glow.png" id="5_particle_tex"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bg"]
@@ -95,6 +95,7 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="TitleLabel" type="Label" parent="MainLayout/LeftPanel/VBox" unique_id=1502290008]
+unique_name_in_owner = true
 layout_mode = 2
 text = "失 窃 的 信"
 label_settings = SubResource("LabelSettings_title")
@@ -158,7 +159,7 @@ size_flags_vertical = 3
 
 [node name="VersionLabel" type="Label" parent="MainLayout/LeftPanel/VBox" unique_id=-656682372]
 layout_mode = 2
-text = "v0.1.0"
+text = "v0.2"
 label_settings = SubResource("LabelSettings_version")
 horizontal_alignment = 2
 

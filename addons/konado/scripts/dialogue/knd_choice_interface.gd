@@ -3,6 +3,9 @@ class_name KND_ChoiceInterface
 
 ## 对话选项UI接口
 
+## 选项按钮主题资源
+const CHOICE_THEME: Theme = preload("res://addons/konado/template/theme/choice_button_theme.tres")
+
 ## 对话选项按钮容器
 @export var _choice_container: Container
 
@@ -23,14 +26,16 @@ func distroy_options() -> void:
 			child.queue_free()
 
 ## 显示对话选项的方法
-func display_options(choices: Array[KND_DialogueChoice], manager: KND_DialogueManager, choices_font_size: int = 32) -> void:
+func display_options(choices: Array[KND_DialogueChoice], manager: KND_DialogueManager, choices_font_size: int = 40) -> void:
 	distroy_options()
-	
+
 	var tmp_list: Array[Button] = []
-	
+
 	# 生成新选项
 	for choice in choices:
 		var choiceButton: Button = Button.new()
+		# 应用选项主题（包含样式 + 字体 + 颜色）
+		choiceButton.theme = CHOICE_THEME
 		# 选项文本内容
 		choiceButton.set_text(choice.choice_text)
 		choiceButton.add_theme_font_size_override("font_size", int(choices_font_size))

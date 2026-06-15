@@ -2,6 +2,9 @@ extends Control
 class_name KND_DialogueManager
 
 ## KND_DialogueManager
+
+## 调试日志开关
+const DEBUG_LOG := true
 ##
 ## Konado对话管理器是对话系统的核心管理类，负责统一调度和管理对话流程的全生命周期，包括对话初始化、播放控制、各类对话指令执行（普通对话、角色显示/隐藏/移动、背景切换、音频播放、选项分支等）、状态管理和错误处理。
 ## 将该脚本挂载到场景中的Control节点上，在编辑器面板中配置配置对话资源后即可开始使用
@@ -70,6 +73,9 @@ var _temp_variables: Dictionary = {}
 ## 演员画布横向分块
 @export var horizontal_division: int = 5
 
+## 选项字体大小
+@export var choices_font_size: int = 40
+
 ## 对话界面接口类
 @export var _konado_choice_interface: KND_ChoiceInterface
 
@@ -111,6 +117,9 @@ var cur_node_id: String = ""
 ## 是否第一进入当前句对话，由于一些方法只需要在首次进入当前行对话时调用一次，而一些方法需要循环调用（如检查打字动画是否完成的方法）
 ## 因此，需要判断是否第一次进入当前行对话
 var justenter: bool
+
+## 转场前存档快照（scene_break 期间非空，用于存档系统）
+var _pre_break_save: Dictionary = {}
 
 ## 当前对话的类型
 var cur_dialogue_type: KND_Dialogue.Type
@@ -175,15 +184,15 @@ func _on_setting_changed(category: String, key: String, value: Variant) -> void:
 			match key:
 				"fullscreen":
 					if value:
-						DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+						get_window().mode = Window.MODE_FULLSCREEN
 					else:
-						DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+						get_window().mode = Window.MODE_WINDOWED
 
 func _ready() -> void:
 	# 应用启动时的全屏设置
 	if _settings_bridge:
 		if _settings_bridge.get_fullscreen():
-			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+			get_window().mode = Window.MODE_FULLSCREEN
 	# 读取自动播放设置
 	if _settings_bridge:
 		var auto = _settings_bridge.get_auto_mode()
@@ -369,13 +378,13 @@ func _process(delta) -> void:
 		# 关闭状态
 		DialogState.OFF:
 			if justenter:
-				print_rich("[color=cyan][b]当前状态：[/b][/color][color=orange]关闭状态[/color]")
+				if DEBUG_LOG: print_rich("[color=cyan][b]当前状态：[/b][/color][color=orange]关闭状态[/color]")
 				justenter = false
 		# 播放状态
 		DialogState.PLAYING:
 			if justenter:
 				justenter = false
-				print_rich("[color=cyan][b]当前状态：[/b][/color][color=orange]播放状态[/color]")
+				if DEBUG_LOG: print_rich("[color=cyan][b]当前状态：[/b][/color][color=orange]播放状态[/color]")
 				if cur_dialogue_shot == null:
 					print_rich("[color=red]对话为空[/color]")
 					return
@@ -410,6 +419,7 @@ func _process(delta) -> void:
 					
 					# 如果有配音播放配音
 					if voice_id:
+						print("[KND_DialogueManager] 尝试播放语音: \"%s\"" % str(voice_id))
 						voice_wait_time = _play_voice(voice_id)
 					
 					if _konado_dialogue_box.typing_completed.is_connected(isfinishtyping):
@@ -419,7 +429,9 @@ func _process(delta) -> void:
 					# 设置角色高亮
 					if actor_auto_highlight:
 						if chara_id:
-							_acting_interface.highlight_actor(chara_id)
+							_acting_interface.highlight_actor(_resolve_actor_id(chara_id))
+						else:
+							_acting_interface.highlight_all()
 					# 播放对话
 					_konado_dialogue_box.typing_interval = _typing_interval
 					dialogue_text_ready.emit(content, chara_id)
@@ -484,7 +496,7 @@ func _process(delta) -> void:
 						print_rich("[color=green]显示选项，共 %d 个选项[/color]" % dialog_choices.size())
 						for c in dialog_choices:
 							print_rich("[color=green]  \"%s\" -> %s[/color]" % [c.choice_text, c.next_id])
-						_konado_choice_interface.display_options(dialog_choices, self)
+						_konado_choice_interface.display_options(dialog_choices, self, choices_font_size)
 						_acting_interface.show()
 						_konado_choice_interface.show()
 						_konado_choice_interface._choice_container.show()
@@ -562,11 +574,35 @@ func _process(delta) -> void:
 				elif cur_dialogue_type == KND_Dialogue.Type.JUMP:
 					var load_path = dialog.jump_shot_path
 					if load_path:
+						# ① 清空对话框
+						_konado_dialogue_box.dialogue_text = ""
+						_konado_dialogue_box.character_name = ""
+						# ② BGM 淡出（并行，不阻塞）
+						if _audio_interface:
+							_audio_interface.fade_out_bgm(1.0)
+						# ③ 退出所有演员
+						_exit_actor("all")
+						await _acting_interface.character_deleted
+						if not is_inside_tree(): return
+						# ④ 淡出到黑屏（使用指定效果，默认 fade）
+						var jump_effect: KND_ActingInterface.BackgroundTransitionEffectsType = \
+							dialog.background_toggle_effects \
+							if dialog.background_toggle_effects != KND_ActingInterface.BackgroundTransitionEffectsType.NONE_EFFECT \
+							else KND_ActingInterface.BackgroundTransitionEffectsType.ALPHA_FADE_EFFECT
+						_display_background("black", jump_effect)
+						await _acting_interface.background_change_finished
+						if not is_inside_tree(): return
+						# ⑤ 加载新 shot 并开始播放
+						# 新 shot 的第一条命令（通常是 background xxx fade）负责从黑屏淡入到新场景
 						var res = load(load_path) as KND_Shot
-						print(res.dialogues)
+						if res:
+							set_shot(res)
+							_dialogue_goto_state(DialogState.PLAYING)
+						else:
+							printerr("jump 目标加载失败：%s" % load_path)
+							_dialogue_goto_state(DialogState.OFF)
+					else:
 						_dialogue_goto_state(DialogState.OFF)
-						set_shot(res)
-						_dialogue_goto_state(DialogState.PLAYING)
 				# 如果是分支内跳转
 				elif cur_dialogue_type == KND_Dialogue.Type.JUMP_BRANCH:
 					if not dialog.next_id.is_empty():
@@ -609,6 +645,22 @@ func _process(delta) -> void:
 					_dialogue_goto_state(DialogState.PAUSED)
 					_process_next()
 				# 如果剧终
+				elif cur_dialogue_type == KND_Dialogue.Type.SCENE_BREAK:
+					# 退出所有演员
+					_exit_actor("all")
+					await _acting_interface.character_deleted
+					if not is_inside_tree(): return
+					# 淡入黑屏
+					_display_background("black", KND_ActingInterface.BackgroundTransitionEffectsType.ALPHA_FADE_EFFECT)
+					await _acting_interface.background_change_finished
+					if not is_inside_tree(): return
+					# 淡出到 test_room
+					_display_background("test_room", KND_ActingInterface.BackgroundTransitionEffectsType.ALPHA_FADE_EFFECT)
+					await _acting_interface.background_change_finished
+					if not is_inside_tree(): return
+					# 推进对话
+					_dialogue_goto_state(DialogState.PAUSED)
+					_process_next()
 				elif cur_dialogue_type == KND_Dialogue.Type.THE_END:
 					# 停止对话
 					stop_dialogue()
@@ -617,7 +669,7 @@ func _process(delta) -> void:
 		DialogState.PAUSED:
 			if justenter:
 				justenter = false
-				print_rich("[color=cyan][b]状态：[/b][/color][color=orange]播放完成状态[/color]")
+				if DEBUG_LOG: print_rich("[color=cyan][b]状态：[/b][/color][color=orange]播放完成状态[/color]")
 				
 		
 ## 打字完成回调
@@ -635,16 +687,16 @@ func isfinishtyping(wait_voice: bool, wait_voice_time: float) -> void:
 			var next_id = current.next_id
 			var nd: KND_Dialogue = cur_dialogue_shot.find_node(next_id)
 			if nd != null and nd.dialog_type == KND_Dialogue.Type.SHOW_CHOICE:
-				print("选项自动下一个")
+				if DEBUG_LOG: print("选项自动下一个")
 				await get_tree().create_timer(0.05).timeout
 				_process_next()
-		print("触发打字完成信号")
+		if DEBUG_LOG: print("触发打字完成信号")
 		return
-	
+
 	# 自动播放：统一走 timer（配音用 voice 时长，否则用用户设置延迟）
 	var delay: float = wait_voice_time if wait_voice else _auto_play_delay
 	_start_auto_play_timer(delay)
-	print("触发打字完成信号")
+	if DEBUG_LOG: print("触发打字完成信号")
 
 # ============================================================
 # Auto-Play System
@@ -652,6 +704,8 @@ func isfinishtyping(wait_voice: bool, wait_voice_time: float) -> void:
 
 ## 统一设置自动播放开关（单一入口，不写回 settings 以避免循环）
 func set_auto_play(enabled: bool) -> void:
+	if _auto_play_enabled == enabled:
+		return
 	_auto_play_enabled = enabled
 	_update_auto_play_button()
 	if enabled and _panel_open_count == 0 and dialogueState == DialogState.PAUSED:
@@ -698,11 +752,11 @@ func _update_auto_play_button() -> void:
 		return
 	_autoPlayButton.set_pressed_no_signal(_auto_play_enabled)
 	if _panel_open_count > 0:
-		_autoPlayButton.set_text("自动播放")
+		_autoPlayButton.set_text(tr("btn_auto_play"))
 	elif _auto_play_enabled:
-		_autoPlayButton.set_text("停止播放")
+		_autoPlayButton.set_text(tr("btn_stop_play"))
 	else:
-		_autoPlayButton.set_text("自动播放")
+		_autoPlayButton.set_text(tr("btn_auto_play"))
 
 
 ## 启动自动播放计时器（延迟后推进下一句）
@@ -734,20 +788,26 @@ func _cancel_auto_play_timer() -> void:
 ## 处理下一个，绑定到下一个按钮
 func _process_next() -> void:
 	dialogue_line_end.emit(cur_node_id)
-	print_rich("[color=yellow]判断状态[/color]")
+	if DEBUG_LOG: print_rich("[color=yellow]判断状态[/color]")
 	match dialogueState:
 		DialogState.OFF:
-			print("对话关闭状态，无需做任何操作")
+			if DEBUG_LOG: print("对话关闭状态，无需做任何操作")
 			return
 		DialogState.PLAYING:
-			if cur_dialogue_type == KND_Dialogue.Type.ORDINARY_DIALOG:
+			var cur := _current_dialogue()
+			if cur != null and cur.dialog_type == KND_Dialogue.Type.ORDINARY_DIALOG:
 				_konado_dialogue_box.skip_typing_anim()
+				# 若 tween 已被 wait_pause 接管而 kill，skip 是空操作
+				# 此时直接显示全文并切换到 PAUSED
+				if dialogueState == DialogState.PLAYING:
+					_konado_dialogue_box.dialogue_label.visible_ratio = 1.0
+					_dialogue_goto_state(DialogState.PAUSED)
 			else:
-				print("对话播放状态，等待播放完成")
+				if DEBUG_LOG: print("对话播放状态，等待播放完成")
 			return
 		DialogState.PAUSED:
 			_audio_interface.stop_voice()
-			print("对话播放完成，开始播放下一个")
+			if DEBUG_LOG: print("对话播放完成，开始播放下一个")
 			# 检查是否还有下一个节点
 			var cur: KND_Dialogue = _current_dialogue()
 			if cur == null or cur.next_id.is_empty() or cur_dialogue_shot.find_node(cur.next_id) == null:
@@ -764,7 +824,7 @@ func _auto_process_next(s: Signal) -> void:
 	_dialogue_goto_state(DialogState.PAUSED)
 	if not s.is_null() and s.is_connected(_auto_process_next):
 		s.disconnect(_auto_process_next)
-		print("触发自动下一个信号")
+		if DEBUG_LOG: print("触发自动下一个信号")
 	_process_next()
 	
 ## 关闭对话的方法
@@ -785,7 +845,7 @@ func _dialogue_goto_state(dialogstate: DialogState) -> void:
 	dialogueState = dialogstate
 	# PAUSED 状态下禁用 _process，减少空闲帧开销
 	set_process(dialogstate != DialogState.PAUSED)
-	print_rich("[color=yellow]切换状态到: [/color]" + str(dialogueState))
+	if DEBUG_LOG: print_rich("[color=yellow]切换状态到: [/color]" + str(dialogueState))
 
 ## 导航到下一个节点
 func _goto_next_node() -> void:
@@ -795,7 +855,7 @@ func _goto_next_node() -> void:
 	print("---------------------------------------------")
 	# 打印时间 日期+时间
 	print("当前时间：" + str(Time.get_time_string_from_system()))
-	print("导航到节点: %s" % cur_node_id)
+	if DEBUG_LOG: print("导航到节点: %s" % cur_node_id)
 			
 ## 显示背景的方法
 func _display_background(bg_name: String, effect: KND_ActingInterface.BackgroundTransitionEffectsType) -> void:
@@ -851,9 +911,36 @@ func _display_character(dialogue: KND_Dialogue) -> void:
 	# 创建角色
 	_acting_interface.create_new_character(target_chara_name, horizontal_division, pos.x, target_state_name, target_state_tex)
 		
+## 将对话显示名映射为演员内部 ID
+func _resolve_actor_id(display_name: String) -> String:
+	match display_name:
+		"克拉拉": return "Clara"
+		"伊芙":   return "Eve"
+		_:        return display_name
+
 ## 演员退场
 func _exit_actor(actor_name: String) -> void:
-	_acting_interface.delete_character(actor_name)
+	if actor_name == "all":
+		_acting_interface.delete_all_actor()
+	else:
+		_acting_interface.delete_character(actor_name)
+
+## 捕获转场前快照（供存档系统在 scene_break 期间使用）
+func _capture_pre_break_state() -> void:
+	var cur := _current_dialogue()
+	var next := cur.next_id if cur else ""
+	_pre_break_save = {
+		"node_id": next,
+		"dialogue_text": _konado_dialogue_box.dialogue_text,
+		"character_name": _konado_dialogue_box.character_name,
+		"background_id": _acting_interface.background_id,
+		"background_texture": _acting_interface.current_texture,
+		"actors": _acting_interface.actor_dict.duplicate(true),
+	}
+
+## 清除转场前快照
+func _clear_pre_break_state() -> void:
+	_pre_break_save.clear()
 
 ## 播放BGM
 func _play_bgm(bgm_name: String) -> void:
@@ -907,6 +994,9 @@ func _play_voice(voice_name: String) -> float:
 			target_voice = voice.voice
 			break
 	_audio_interface.play_voice(target_voice)
+	if target_voice == null:
+		push_warning("KND_DialogueManager._play_voice: voice \"%s\" 未在 voice_list 中找到" % voice_name)
+		return 0.0
 	return target_voice.get_length()
 
 

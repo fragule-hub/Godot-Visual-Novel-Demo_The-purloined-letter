@@ -1,5 +1,8 @@
 [gd_resource type="LabelSettings" format=3 uid="uid://bt1kcc4n8hkhc"]
 
+[ext_resource type="FontFile" uid="uid://byulpi0n4362q" path="res://assets/font/SourceHanSerifCN-Bold.otf" id="1_svk46"]
+
 [resource]
+font = ExtResource("1_svk46")
 font_size = 36
 font_color = Color(0.35, 0.72, 0.8, 1)

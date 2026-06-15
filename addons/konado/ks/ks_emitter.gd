@@ -106,6 +106,8 @@ func _emit_node(node: KS_AST.ASTNode) -> KND_Dialogue:
 		return _emit_achievement(node)
 	if node is KS_AST.EndNode:
 		return _emit_end(node)
+	if node is KS_AST.SceneBreakNode:
+		return _emit_scene_break(node)
 
 	return null
 
@@ -293,6 +295,10 @@ func _emit_jump(node: KS_AST.JumpNode) -> KND_Dialogue:
 	d.source_file_line = node.line
 	d.dialog_type = KND_Dialogue.Type.JUMP
 	d.jump_shot_path = node.target_path
+	# 过渡效果（可选，默认在运行时使用 ALPHA_FADE_EFFECT）
+	if not node.effect.is_empty():
+		d.background_toggle_effects = BACKGROUND_EFFECTS_MAP.get(
+			node.effect, KND_ActingInterface.BackgroundTransitionEffectsType.ALPHA_FADE_EFFECT)
 	return d
 
 
@@ -332,6 +338,9 @@ func _emit_achievement(node: KS_AST.AchievementNode) -> KND_Dialogue:
 	return d
 
 
+## 后处理：分配 node_id、连接 next_id、扁平化
+
+
 func _emit_end(node: KS_AST.EndNode) -> KND_Dialogue:
 	var d := KND_Dialogue.new()
 	d.source_file_line = node.line
@@ -339,7 +348,17 @@ func _emit_end(node: KS_AST.EndNode) -> KND_Dialogue:
 	return d
 
 
-## 后处理：分配 node_id、连接 next_id、扁平化
+func _emit_scene_break(node: KS_AST.SceneBreakNode) -> KND_Dialogue:
+	var d := KND_Dialogue.new()
+	d.source_file_line = node.line
+	d.dialog_type = KND_Dialogue.Type.SCENE_BREAK
+	d.background_image_name = node.target_bg
+	if not node.effect.is_empty():
+		d.background_toggle_effects = BACKGROUND_EFFECTS_MAP.get(
+			node.effect, KND_ActingInterface.BackgroundTransitionEffectsType.ALPHA_FADE_EFFECT)
+	return d
+
+
 func _post_process(shot: KND_Shot, main_dialogues: Array[KND_Dialogue]) -> void:
 	# 1. 为主线对话分配 node_id
 	for d in main_dialogues:

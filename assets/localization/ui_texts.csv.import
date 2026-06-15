@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://bevpsfriqkosp"
+
+[deps]
+
+files=["res://assets/localization/ui_texts.zh.translation", "res://assets/localization/ui_texts.en.translation", "res://assets/localization/ui_texts.ja.translation"]
+
+source_file="res://assets/localization/ui_texts.csv"
+dest_files=["res://assets/localization/ui_texts.zh.translation", "res://assets/localization/ui_texts.en.translation", "res://assets/localization/ui_texts.ja.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

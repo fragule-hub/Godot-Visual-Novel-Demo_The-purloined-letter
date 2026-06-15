@@ -8,6 +8,7 @@ class_name ProjectSavePanel
 
 @onready var _slot_container: VBoxContainer = %SlotContainer
 @onready var _close_btn: Button = %CloseBtn
+@onready var _title_label: Label = %TitleLabel
 
 @export var save_slot_scene: PackedScene = preload("res://scenes/ui/save_slot.tscn")
 @export var save_slot_count: int = 20
@@ -18,6 +19,8 @@ var _save_slots: Array[SaveSlot] = []
 
 
 func _ready() -> void:
+	_close_btn.text = tr("btn_close")
+	_title_label.text = tr("save_title")
 	_close_btn.pressed.connect(_on_close_pressed)
 	_create_slots()
 
@@ -29,7 +32,14 @@ func _create_slots() -> void:
 			_slot_container.add_child(slot)
 			slot.save_id = i
 			slot.init_empty_save_slot()
+			slot.save_loaded.connect(_on_save_loaded)
 			_save_slots.append(slot)
+
+
+## 读档成功后自动关闭面板
+func _on_save_loaded() -> void:
+	if _overlay:
+		_overlay.close()
 
 
 ## overlay 打开时刷新存档数据

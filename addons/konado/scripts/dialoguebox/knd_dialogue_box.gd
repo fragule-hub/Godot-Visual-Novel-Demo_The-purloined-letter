@@ -244,7 +244,15 @@ func update_dialogue_box_height() -> void:
 	
 	
 func update_dialogue_content() -> void:
-	if not is_inside_tree() or dialogue_text.is_empty():
+	if not is_inside_tree():
+		return
+	# 清空文本：停止打字动画并清空标签
+	if dialogue_text.is_empty():
+		if typing_tween != null and typing_tween.is_valid():
+			typing_tween.kill()
+			typing_tween = null
+		dialogue_label.text = ""
+		dialogue_label.visible_ratio = 1.0
 		return
 	
 	# 每次更新对话内容时，重新应用主题设置（确保字体大小/颜色生效）
@@ -297,7 +305,6 @@ func skip_typing_anim() -> void:
 			typing_completed.emit()
 	else:
 		# 传统模式
-		# 如果打字动画正在运行，则中断并跳过
 		if typing_tween != null and typing_tween.is_running():
 			# 停止打字动画
 			typing_tween.kill()

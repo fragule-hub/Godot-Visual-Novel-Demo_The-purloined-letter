@@ -17,7 +17,7 @@ func _ready() -> void:
 	dialogue_manager.autostart = false
 
 	dialogue_manager.custom_signal.connect(func(c): print("Konado signal: ", c))
-	dialogue_manager.shot_end.connect(func(): print("Dialogue finished"))
+	dialogue_manager.shot_end.connect(_on_shot_end)
 
 	# 内联命令处理器
 	_inline_processor = InlineCommandProcessor.new(
@@ -51,6 +51,7 @@ func _ready() -> void:
 		"KonadoDialogueLeftProject/KonadoUI/ColorRect/HBoxContainer/Review")
 	if review_btn is Button:
 		review_btn.pressed.connect(_backlog_overlay.open)
+		review_btn.text = tr("btn_review")
 
 	# ── 存档面板 ──
 	_save_overlay = KND_OverlayPanel.new()
@@ -70,18 +71,28 @@ func _ready() -> void:
 		"KonadoDialogueLeftProject/KonadoUI/ColorRect/HBoxContainer/Save")
 	if save_btn is Button:
 		save_btn.pressed.connect(_save_overlay.open)
+		save_btn.text = tr("btn_save_load")
 
 	# 连接「返回」按钮
 	var return_btn := get_node_or_null(
 		"KonadoDialogueLeftProject/KonadoUI/ColorRect/HBoxContainer/Return")
 	if return_btn is Button:
 		return_btn.pressed.connect(_on_return_to_title)
+		return_btn.text = tr("btn_return_title")
 
 	# ── 设置面板信号 ──
 	if dialogue_manager._settings_bridge:
 		var bridge = dialogue_manager._settings_bridge
 		bridge.settings_panel_opened.connect(_on_panel_opened)
 		bridge.settings_panel_closed.connect(_on_panel_closed)
+
+	# ── 语言变更订阅 ──
+	var settings_mgr := get_node_or_null("/root/KND_Settings")
+	if settings_mgr and settings_mgr.has_signal("setting_changed"):
+		settings_mgr.setting_changed.connect(_on_setting_changed)
+
+	# ── 底部按钮本地化 ──
+	_apply_ui_localization()
 
 	# ── 等待过渡完成后再启动游戏 ──
 	if SceneTransition.is_transitioning():
@@ -164,3 +175,44 @@ func _on_panel_closed() -> void:
 
 func _on_return_to_title() -> void:
 	SceneTransition.change_scene("res://scenes/ui/title_screen.tscn", SceneTransition.Effect.FADE)
+
+
+func _on_shot_end() -> void:
+	BgmManager.stop(1.0)
+	get_tree().create_timer(1.0).timeout.connect(func():
+		SceneTransition.change_scene("res://scenes/ui/title_screen.tscn", SceneTransition.Effect.FADE)
+	)
+
+
+func _apply_ui_localization() -> void:
+	var base := "KonadoDialogueLeftProject/KonadoUI/ColorRect/HBoxContainer/"
+	var auto_btn := get_node_or_null(base + "AutoPlay")
+	if auto_btn is Button:
+		# 固定最小宽度，防止文字切换时按钮宽度跳变
+		auto_btn.custom_minimum_size.x = 95
+		dialogue_manager._update_auto_play_button()
+	var achievement_btn := get_node_or_null(base + "Achievement")
+	if achievement_btn is Button:
+		achievement_btn.text = tr("btn_achievement")
+	var settings_btn := get_node_or_null(base + "Settings")
+	if settings_btn is Button:
+		settings_btn.text = tr("btn_dialogue_settings")
+	# Review / Save / Return 按钮也在底部栏，一并刷新
+	var review_btn := get_node_or_null(base + "Review")
+	if review_btn is Button:
+		review_btn.text = tr("btn_review")
+	var save_btn := get_node_or_null(base + "Save")
+	if save_btn is Button:
+		save_btn.text = tr("btn_save_load")
+	var return_btn := get_node_or_null(base + "Return")
+	if return_btn is Button:
+		return_btn.text = tr("btn_return_title")
+
+
+func _on_setting_changed(category: String, key: String, value: Variant) -> void:
+	if category == "display" and key == "language":
+		GameState.apply_language(value)
+		_apply_ui_localization()
+		# 刷新回顾面板标题
+		if _backlog_panel:
+			_backlog_panel._title_label.text = tr("backlog_title")

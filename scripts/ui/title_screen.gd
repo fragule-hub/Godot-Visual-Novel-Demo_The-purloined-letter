@@ -33,6 +33,7 @@ var _all_expressions: Array[String] = [
 
 # ── 面板 ──
 var _save_overlay: KND_OverlayPanel
+var _settings_overlay: KND_OverlayPanel
 @warning_ignore("unused_private_class_variable") var _credits_overlay: KND_OverlayPanel
 var _save_system: KND_SaveSystem
 
@@ -43,6 +44,11 @@ func _ready() -> void:
 	_connect_buttons()
 	_clara_click_area.gui_input.connect(_on_clara_input)
 	_play_title_bgm()
+	_apply_localization()
+	# 订阅语言变更
+	var mgr := get_node_or_null("/root/KND_Settings")
+	if mgr and mgr.has_signal("setting_changed"):
+		mgr.setting_changed.connect(_on_setting_changed)
 
 
 # ============================================================
@@ -111,11 +117,10 @@ func _on_continue() -> void:
 	# 覆盖存档槽的加载行为：设置 pending_save_id 后切换场景
 	_override_save_slot_load_behavior(save_panel)
 
-	# 标题界面纯读档模式：隐藏保存按钮
+	# 标题界面纯读档模式：设置 read_only，按钮由 _update_button_visibility() 自动处理
 	for slot in save_panel._save_slots:
 		if slot is SaveSlot:
 			slot.read_only = true
-			slot._save_btn.visible = false
 
 
 func _override_save_slot_load_behavior(save_panel: ProjectSavePanel) -> void:
@@ -137,16 +142,20 @@ func _on_save_slot_load(save_id: int) -> void:
 
 
 func _on_settings() -> void:
-	var settings_overlay := KND_OverlayPanel.new()
-	settings_overlay.fade_duration = 0.25
-	add_child(settings_overlay)
+	if _settings_overlay:
+		_settings_overlay.open()
+		return
+
+	_settings_overlay = KND_OverlayPanel.new()
+	_settings_overlay.fade_duration = 0.25
+	add_child(_settings_overlay)
 
 	var panel: ProjectSettingsPanel = preload(
 		"res://scenes/ui/project_settings_panel.tscn").instantiate()
 	panel.show_return_btn = false
-	panel._overlay = settings_overlay
-	settings_overlay.content = panel
-	settings_overlay.open()
+	panel._overlay = _settings_overlay
+	_settings_overlay.content = panel
+	_settings_overlay.open()
 
 
 func _on_credits() -> void:
@@ -166,6 +175,31 @@ func _on_credits() -> void:
 
 func _on_quit() -> void:
 	get_tree().quit()
+
+
+# ============================================================
+# ESC 关闭面板
+# ============================================================
+
+## 返回当前可见的最顶层 overlay（Esc 关闭优先级：设置 > 存档 > 制作团队）
+func _get_top_panel() -> KND_OverlayPanel:
+	if _settings_overlay and _settings_overlay.visible:
+		return _settings_overlay
+	if _save_overlay and _save_overlay.visible:
+		return _save_overlay
+	if _credits_overlay and _credits_overlay.visible:
+		return _credits_overlay
+	return null
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		var top := _get_top_panel()
+		if top:
+			top.close()
+			get_viewport().set_input_as_handled()
+		else:
+			get_tree().quit()
 
 
 # ============================================================
@@ -244,3 +278,23 @@ func _pick_expression_different(current: String) -> String:
 ## 播放标题界面背景音乐（委托 BgmManager autoload）
 func _play_title_bgm() -> void:
 	BgmManager.play("res://assets/music/乌鸦producer/标题音乐.wav")
+
+
+# ============================================================
+# 本地化
+# ============================================================
+
+## 应用 tr() 到所有 UI 文本
+func _apply_localization() -> void:
+	%TitleLabel.text = tr("game_title")
+	_new_game_btn.text = tr("btn_new_game")
+	_continue_btn.text = tr("btn_continue")
+	_settings_btn.text = tr("btn_settings")
+	_credits_btn.text = tr("btn_credits")
+	_quit_btn.text = tr("btn_quit")
+
+
+func _on_setting_changed(category: String, key: String, value: Variant) -> void:
+	if category == "display" and key == "language":
+		GameState.apply_language(value)
+		_apply_localization()
