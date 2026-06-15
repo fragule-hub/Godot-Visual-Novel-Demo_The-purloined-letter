@@ -18,6 +18,7 @@ enum Type {
 	BRANCH,          # Deprecated - 保留枚举值兼容性
 	JUMP,
 	JUMP_BRANCH,
+	JUMP_ID,
 	SIGNAL,
 	ACHIEVEMENT_UNLOCK,
 	ACHIEVEMENT_PROGRESS,
@@ -87,6 +88,8 @@ enum Type {
 @export var custom_signal_name: String
 ## 目标跳转的镜头
 @export var jump_shot_path: String
+## 目标跳转的章节 ID
+@export var jump_chapter_id: String = ""
 ## 目标跳转的分支标签
 @export var jump_branch_target: String = ""
 ## 成就ID

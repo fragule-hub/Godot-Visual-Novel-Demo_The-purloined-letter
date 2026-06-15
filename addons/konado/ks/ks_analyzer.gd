@@ -84,6 +84,9 @@ func _validate_node(node: KS_AST.ASTNode, context: String) -> void:
 		pass
 	elif node is KS_AST.JumpNode:
 		pass
+	elif node is KS_AST.JumpIdNode:
+		if node.target_id.is_empty():
+			_error(node.line, "jump_id 缺少目标 ID")
 	elif node is KS_AST.SignalNode:
 		if node.signal_content.is_empty():
 			_error(node.line, "信号指令内容为空")

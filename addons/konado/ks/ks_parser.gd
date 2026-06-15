@@ -107,6 +107,8 @@ func _parse_statement() -> KS_AST.ASTNode:
 			return _parse_jump_branch()
 		KS_Token.Type.KW_JUMP:
 			return _parse_jump()
+		KS_Token.Type.KW_JUMP_ID:
+			return _parse_jump_id()
 		KS_Token.Type.KW_SIGNAL:
 			return _parse_signal()
 		KS_Token.Type.KW_ACHIEVEMENT:
@@ -559,6 +561,40 @@ func _parse_jump() -> KS_AST.JumpNode:
 	if node.target_path.is_empty():
 		_error("jump 缺少目标路径")
 		return null
+
+	_skip_to_next_line()
+	return node
+
+
+## jump_id 解析（按章节 ID 路由，查配置表获取实际路径）
+func _parse_jump_id() -> KS_AST.JumpIdNode:
+	var node := KS_AST.JumpIdNode.new()
+	node.line = _peek().line
+	_advance()  # 跳过 jump_id
+
+	# 收集行末所有 token
+	var all_tokens: Array = []
+	while not _at_line_end():
+		all_tokens.append(_advance())
+
+	if all_tokens.is_empty():
+		_error("jump_id 缺少目标 ID")
+		return null
+
+	var last_str := str(all_tokens[all_tokens.size() - 1].value)
+	var known_effects := ["none", "erase", "blinds", "wave", "fade", "vortex", "windmill", "cyberglitch"]
+
+	if last_str in known_effects and all_tokens.size() >= 2:
+		node.effect = last_str
+		var parts: PackedStringArray = []
+		for i in range(all_tokens.size() - 1):
+			parts.append(str(all_tokens[i].value))
+		node.target_id = "".join(parts).strip_edges()
+	else:
+		var parts: PackedStringArray = []
+		for t in all_tokens:
+			parts.append(str(t.value))
+		node.target_id = "".join(parts).strip_edges()
 
 	_skip_to_next_line()
 	return node

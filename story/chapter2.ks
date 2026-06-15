@@ -299,4 +299,4 @@ branch c2_merge:
 
     "伊芙" "我需要想一想。{change:Eve,neutral}{wait_pause:3,3}"
 
-    jump res://story/chapter3.ks erase
+    jump_id chapter3 erase

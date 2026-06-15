@@ -5,7 +5,8 @@
 [ext_resource type="LabelSettings" uid="uid://bt1kcc4n8hkhc" path="res://resources/theme/backlog_entry_name.tres" id="3_name_label"]
 
 [node name="SaveSlot" type="PanelContainer" unique_id=142491987]
-custom_minimum_size = Vector2(0, 120)
+offset_right = 301.0
+offset_bottom = 232.0
 theme_override_styles/panel = ExtResource("2_empty_bg")
 script = ExtResource("1_script")
 
@@ -53,6 +54,7 @@ text = "--/--/-- --:--"
 layout_mode = 2
 
 [node name="ButtonRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=381375595]
+custom_minimum_size = Vector2(0, 55)
 layout_mode = 2
 size_flags_vertical = 8
 theme_override_constants/separation = 12

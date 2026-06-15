@@ -55,6 +55,16 @@ var _auto_play_delay: float = 2.0
 var _panel_open_count: int = 0
 ## 自动播放计时器代数（递增以"取消"旧 timer，避免 Godot 无 timer.cancel() 的问题）
 var _auto_play_timer_generation: int = 0
+var _process_next_frame: int = -1
+
+## 章节路径映射（从 chapter_map.json 加载）
+var _chapter_map: Dictionary = {}
+## 起始章节 ID（从配置读取）
+var _start_chapter_id: String = "chapter1"
+## 当前章节 ID（用于存档和语言切换）
+var _current_chapter_id: String = ""
+## KS 脚本编译器（运行时编译 .ks 文件为 KND_Shot）
+var _ks_compiler: KS_Compiler = KS_Compiler.new()
 
 ## 对话打字播放速度
 @export var _typing_interval: float = 0.04
@@ -291,13 +301,22 @@ func _show_error(msg: String) -> void:
 
 ## 初始化对话的方法
 func init_dialogue(callback: Callable = Callable()) -> void:
-	# 如果对话数据为空，则默认为第一个对话数据
-	if start_dialogue_shot == null:
-		push_error("未设置对话镜头")
-		return
-	else:
-		# 如果不为空，复制一份start_dialogue_shot
+	_load_chapter_map()
+
+	if not _chapter_map.is_empty():
+		# 从配置加载起始章节
+		var path := get_chapter_path(_start_chapter_id)
+		if path:
+			var shot := _ks_compiler.compile_file(path)
+			if shot:
+				cur_dialogue_shot = shot.duplicate()
+				_current_chapter_id = _start_chapter_id
+	elif start_dialogue_shot != null:
+		# 兼容模式：编辑器直接指定 shot
 		cur_dialogue_shot = start_dialogue_shot.duplicate()
+	else:
+		push_error("未设置对话镜头且无章节配置")
+		return
 	# 将角色表传给acting_interface
 	_acting_interface.chara_list = chara_list
 
@@ -574,34 +593,19 @@ func _process(delta) -> void:
 				elif cur_dialogue_type == KND_Dialogue.Type.JUMP:
 					var load_path = dialog.jump_shot_path
 					if load_path:
-						# ① 清空对话框
-						_konado_dialogue_box.dialogue_text = ""
-						_konado_dialogue_box.character_name = ""
-						# ② BGM 淡出（并行，不阻塞）
-						if _audio_interface:
-							_audio_interface.fade_out_bgm(1.0)
-						# ③ 退出所有演员
-						_exit_actor("all")
-						await _acting_interface.character_deleted
-						if not is_inside_tree(): return
-						# ④ 淡出到黑屏（使用指定效果，默认 fade）
-						var jump_effect: KND_ActingInterface.BackgroundTransitionEffectsType = \
-							dialog.background_toggle_effects \
-							if dialog.background_toggle_effects != KND_ActingInterface.BackgroundTransitionEffectsType.NONE_EFFECT \
-							else KND_ActingInterface.BackgroundTransitionEffectsType.ALPHA_FADE_EFFECT
-						_display_background("black", jump_effect)
-						await _acting_interface.background_change_finished
-						if not is_inside_tree(): return
-						# ⑤ 加载新 shot 并开始播放
-						# 新 shot 的第一条命令（通常是 background xxx fade）负责从黑屏淡入到新场景
-						var res = load(load_path) as KND_Shot
-						if res:
-							set_shot(res)
-							_dialogue_goto_state(DialogState.PLAYING)
-						else:
-							printerr("jump 目标加载失败：%s" % load_path)
-							_dialogue_goto_state(DialogState.OFF)
+						_execute_jump_transition(
+							_resolve_localized_path(load_path),
+							dialog.background_toggle_effects)
 					else:
+						_dialogue_goto_state(DialogState.OFF)
+				# 如果是章节 ID 跳转
+				elif cur_dialogue_type == KND_Dialogue.Type.JUMP_ID:
+					var chapter_id: String = dialog.jump_chapter_id
+					var id_path: String = get_chapter_path(chapter_id)
+					if id_path:
+						_execute_jump_transition(id_path, dialog.background_toggle_effects, chapter_id)
+					else:
+						printerr("jump_id 章节不存在：%s" % chapter_id)
 						_dialogue_goto_state(DialogState.OFF)
 				# 如果是分支内跳转
 				elif cur_dialogue_type == KND_Dialogue.Type.JUMP_BRANCH:
@@ -787,6 +791,11 @@ func _cancel_auto_play_timer() -> void:
 
 ## 处理下一个，绑定到下一个按钮
 func _process_next() -> void:
+	var frame := Engine.get_process_frames()
+	if frame == _process_next_frame:
+		return
+	_process_next_frame = frame
+
 	dialogue_line_end.emit(cur_node_id)
 	if DEBUG_LOG: print_rich("[color=yellow]判断状态[/color]")
 	match dialogueState:
@@ -914,9 +923,112 @@ func _display_character(dialogue: KND_Dialogue) -> void:
 ## 将对话显示名映射为演员内部 ID
 func _resolve_actor_id(display_name: String) -> String:
 	match display_name:
-		"克拉拉": return "Clara"
-		"伊芙":   return "Eve"
-		_:        return display_name
+		"克拉拉", "Clara", "クララ": return "Clara"
+		"伊芙", "Eve", "イヴ":       return "Eve"
+		_:                            return display_name
+
+## 根据当前 locale 解析本地化脚本路径（不存在时回退原路径）
+func _resolve_localized_path(base_path: String) -> String:
+	var locale := TranslationServer.get_locale()
+	if locale == "zh":
+		return base_path
+	var dir := base_path.get_base_dir()
+	var file := base_path.get_file()
+	var localized := dir.path_join(locale).path_join(file)
+	if FileAccess.file_exists(localized):
+		return localized
+	return base_path
+
+
+## 加载章节配置（chapter_map.json）
+func _load_chapter_map() -> void:
+	var path := "res://story/chapter_map.json"
+	if not FileAccess.file_exists(path):
+		return
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		return
+	var json := JSON.parse_string(file.get_as_text())
+	if typeof(json) == TYPE_DICTIONARY:
+		_chapter_map = json.get("chapters", {})
+		_start_chapter_id = json.get("start_chapter", "chapter1")
+
+
+## 根据章节 ID 和当前 locale 获取文件路径
+func get_chapter_path(chapter_id: String) -> String:
+	if not _chapter_map.has(chapter_id):
+		push_error("未知章节 ID: %s" % chapter_id)
+		return ""
+	var locale := TranslationServer.get_locale()
+	var paths: Dictionary = _chapter_map[chapter_id]
+	var result: String = ""
+	if paths.has(locale):
+		result = paths[locale]
+	else:
+		result = paths.get("zh", "")
+	# 校验文件存在性
+	if not result.is_empty() and not FileAccess.file_exists(result):
+		push_warning("章节 %s 的 %s 语言文件不存在：%s，回退中文" % [chapter_id, locale, result])
+		result = paths.get("zh", "")
+	return result
+
+
+## 执行跳转过渡动画并加载新 shot（JUMP 和 JUMP_ID 共用）
+func _execute_jump_transition(target_path: String, effect, chapter_id: String = "") -> void:
+	# ① 清空对话框
+	_konado_dialogue_box.dialogue_text = ""
+	_konado_dialogue_box.character_name = ""
+	# ② BGM 淡出（并行，不阻塞）
+	if _audio_interface:
+		_audio_interface.fade_out_bgm(1.0)
+	# ③ 退出所有演员
+	_exit_actor("all")
+	await _acting_interface.character_deleted
+	if not is_inside_tree(): return
+	# ④ 淡出到黑屏
+	var jump_effect: KND_ActingInterface.BackgroundTransitionEffectsType = \
+		effect \
+		if effect != KND_ActingInterface.BackgroundTransitionEffectsType.NONE_EFFECT \
+		else KND_ActingInterface.BackgroundTransitionEffectsType.ALPHA_FADE_EFFECT
+	_display_background("black", jump_effect)
+	await _acting_interface.background_change_finished
+	if not is_inside_tree(): return
+	# ⑤ 编译并加载新 shot
+	var res := _ks_compiler.compile_file(target_path)
+	if res:
+		if not chapter_id.is_empty():
+			_current_chapter_id = chapter_id
+		set_shot(res)
+		_dialogue_goto_state(DialogState.PLAYING)
+	else:
+		printerr("跳转目标加载失败：%s" % target_path)
+		_dialogue_goto_state(DialogState.OFF)
+
+
+## 语言切换时重新加载当前章节（保持对话位置）
+func reload_for_locale_change() -> void:
+	if _current_chapter_id.is_empty() or cur_dialogue_shot == null:
+		return
+	var saved_node_id := cur_node_id
+	var path := get_chapter_path(_current_chapter_id)
+	if path.is_empty():
+		return
+	var new_shot := _ks_compiler.compile_file(path)
+	if new_shot == null:
+		return
+	cur_dialogue_shot = new_shot.duplicate()
+	# 恢复对话位置
+	if cur_dialogue_shot.find_node(saved_node_id) != null:
+		cur_node_id = saved_node_id
+	else:
+		cur_node_id = cur_dialogue_shot.start_node_id
+	# 刷新当前显示
+	var dialog = _current_dialogue()
+	if dialog and dialog.dialog_type == KND_Dialogue.Type.ORDINARY_DIALOG:
+		var content := _interpolate_variables(dialog.dialog_content)
+		_konado_dialogue_box.dialogue_text = content
+		_konado_dialogue_box.character_name = dialog.character_id
+
 
 ## 演员退场
 func _exit_actor(actor_name: String) -> void:

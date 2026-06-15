@@ -314,6 +314,8 @@ actor show Clara face=neutral at 2
 
 "我" "你知道？"
 
+"" "克拉拉用一种“你问了一个很失礼的问题”的表情看着我。"
+
 "克拉拉" "爱伦·坡笔下的侦探。世界上最早的名侦探。《莫格街凶杀案》《玛丽·罗杰疑案》——{change:Clara,preset:body_coat|face=happy}"
 
 "" "她停顿了一下。"

@@ -18,6 +18,7 @@ func _ready() -> void:
 
 	dialogue_manager.custom_signal.connect(func(c): print("Konado signal: ", c))
 	dialogue_manager.shot_end.connect(_on_shot_end)
+	GameState.language_changed.connect(_on_language_changed)
 
 	# 内联命令处理器
 	_inline_processor = InlineCommandProcessor.new(
@@ -182,6 +183,11 @@ func _on_shot_end() -> void:
 	get_tree().create_timer(1.0).timeout.connect(func():
 		SceneTransition.change_scene("res://scenes/ui/title_screen.tscn", SceneTransition.Effect.FADE)
 	)
+
+
+func _on_language_changed() -> void:
+	if dialogue_manager:
+		dialogue_manager.reload_for_locale_change()
 
 
 func _apply_ui_localization() -> void:

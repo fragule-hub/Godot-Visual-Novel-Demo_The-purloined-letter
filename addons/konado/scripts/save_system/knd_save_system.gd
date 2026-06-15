@@ -67,7 +67,7 @@ func set_dialogue_manager(manager: KND_DialogueManager) -> void:
 	dialogue_manager = manager
 
 ## 创建存档
-func save_game(save_id: int) -> bool:
+func save_game(save_id: int, save_name: String = "") -> bool:
 	if save_id < 0 or save_id >= max_save_slots:
 		printerr("存档ID超出范围")
 		return false
@@ -101,6 +101,8 @@ func save_game(save_id: int) -> bool:
 	# 添加存档元数据
 	save_data.save_time = Time.get_datetime_dict_from_system()
 	save_data.version = "1.0"
+	if not save_name.is_empty():
+		save_data.save_name = save_name
 	
 	# 序列化为JSON
 	var json = JSON.stringify(save_data.to_dict())
@@ -198,10 +200,7 @@ func delete_save(save_id: int) -> bool:
 	if not FileAccess.file_exists(save_path):
 		return true  # 文件不存在，视为删除成功
 	
-	var dir = DirAccess.open(SAVE_DIR)
-	if dir:
-		return dir.remove(str(save_id) + SAVE_EXT)
-	return false
+	return DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path)) == OK
 
 ## 获取存档信息
 func get_save_info(save_id: int) -> Dictionary:
@@ -226,6 +225,7 @@ func get_save_info(save_id: int) -> Dictionary:
 	return {
 		"save_time": parse_result.get("save_time", {}),
 		"version": parse_result.get("version", ""),
+		"save_name": parse_result.get("save_name", ""),
 		"exists": true
 	}
 
@@ -235,6 +235,30 @@ func get_all_save_info() -> Array[Dictionary]:
 	for i in range(max_save_slots):
 		save_infos.append(get_save_info(i))
 	return save_infos
+
+
+## 单独更新存档名称（不触发完整存档流程）
+func update_save_name(save_id: int, new_name: String) -> bool:
+	if save_id < 0 or save_id >= max_save_slots:
+		return false
+	var save_path := SAVE_DIR + str(save_id) + SAVE_EXT
+	if not FileAccess.file_exists(save_path):
+		return false
+	var file := FileAccess.open(save_path, FileAccess.READ)
+	if not file:
+		return false
+	var json := file.get_as_text()
+	file.close()
+	var data := JSON.parse_string(json)
+	if typeof(data) != TYPE_DICTIONARY:
+		return false
+	data["save_name"] = new_name
+	var out := FileAccess.open(save_path, FileAccess.WRITE)
+	if not out:
+		return false
+	out.store_string(JSON.stringify(data))
+	out.close()
+	return true
 
 ## 自动存档
 func _auto_save() -> void:
@@ -247,7 +271,10 @@ func _capture_dialogue_state() -> Dictionary:
 	var use_pre := not pre.is_empty()
 
 	# 保存当前镜头
-	if dialogue_manager.cur_dialogue_shot:
+	# 优先保存章节 ID（语言无关），回退到 shot_path
+	if not dialogue_manager._current_chapter_id.is_empty():
+		state["chapter_id"] = dialogue_manager._current_chapter_id
+	elif dialogue_manager.cur_dialogue_shot:
 		state["shot_path"] = dialogue_manager.cur_dialogue_shot.ks_path
 
 	# node_id：有转场快照时用快照的（跳过 scene_break），否则用当前的
@@ -270,11 +297,25 @@ func _capture_dialogue_state() -> Dictionary:
 
 ## 恢复对话状态
 func _restore_dialogue_state(state: Dictionary) -> void:
-	# 加载镜头
-	if state.has("shot_path") and state["shot_path"]:
-		var shot = load(state["shot_path"]) as KND_Shot
-		if shot:
-			dialogue_manager.set_shot(shot)
+	var shot: KND_Shot = null
+
+	# 优先使用 chapter_id 查表（语言自适应）
+	if state.has("chapter_id") and not state["chapter_id"].is_empty():
+		var path := dialogue_manager.get_chapter_path(state["chapter_id"])
+		if path:
+			shot = dialogue_manager._ks_compiler.compile_file(path)
+			dialogue_manager._current_chapter_id = state["chapter_id"]
+
+	# 回退：旧存档使用 shot_path（可能是 .tres 资源或 .ks 文件）
+	if shot == null and state.has("shot_path") and state["shot_path"]:
+		var sp: String = state["shot_path"]
+		if sp.ends_with(".ks"):
+			shot = dialogue_manager._ks_compiler.compile_file(sp)
+		else:
+			shot = load(sp) as KND_Shot
+
+	if shot:
+		dialogue_manager.set_shot(shot)
 	
 	# 恢复对话节点ID
 	if state.has("current_node_id"):

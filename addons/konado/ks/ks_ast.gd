@@ -85,6 +85,12 @@ class JumpNode extends ASTNode:
 	var effect: String = ""       ## 过渡效果关键字（可选，默认 fade）
 
 
+## 跳转章节 ID 节点
+class JumpIdNode extends ASTNode:
+	var target_id: String = ""    ## 章节 ID（如 "chapter2"）
+	var effect: String = ""       ## 过渡效果关键字（可选）
+
+
 ## 跳转分支节点
 class JumpBranchNode extends ASTNode:
 	var target_branch: String = ""

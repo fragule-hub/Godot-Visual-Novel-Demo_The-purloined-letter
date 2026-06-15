@@ -26,6 +26,9 @@ var save_time: Dictionary = {}
 ## 存档版本
 var version: String = "1.0"
 
+## 自定义存档名称
+var save_name: String = ""
+
 ## 转换为字典
 func to_dict() -> Dictionary:
 	return {
@@ -35,7 +38,8 @@ func to_dict() -> Dictionary:
 		"actor_state": actor_state,
 		"background_state": background_state,
 		"save_time": save_time,
-		"version": version
+		"version": version,
+		"save_name": save_name
 	}
 
 ## 从字典加载
@@ -60,3 +64,6 @@ func from_dict(data: Dictionary) -> void:
 	
 	if data.has("version"):
 		version = data["version"]
+
+	if data.has("save_name"):
+		save_name = data["save_name"]

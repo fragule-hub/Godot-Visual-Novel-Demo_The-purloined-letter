@@ -448,4 +448,4 @@ branch c4_merge:
     play bgm battle
     "克拉拉" "那就说明我回来的正好。"
 
-    jump res://story/chapter4.ks erase
+    jump_id chapter4 erase

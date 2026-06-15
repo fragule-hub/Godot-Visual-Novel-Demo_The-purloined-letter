@@ -192,7 +192,7 @@ actor change Clara preset:body_coat|face=happy
 "" "克拉拉没有回答，只是把报纸翻了一页，仿佛一切都在她的掌握之中。"
 "" "伊芙推门进来。"
 
-actor show Eve neutral at 2
+actor show Eve cry at 2
 
 "伊芙" "打、打扰了。"
 
@@ -253,7 +253,7 @@ branch c1_reveal:
 
     "" "伊芙抬起手，看上去想要解释一下。"
 
-    "伊芙" "是、是我提前给克拉拉同学发了消息。说有事情想来推理部咨询。{change:Eve,shy}"
+    "伊芙" "是、是我提前给克拉拉同学发了消息。说有事情想来推理部咨询。{change:Eve,neutral}"
 
     "克拉拉" "这是情报战。"
 
@@ -298,4 +298,4 @@ branch c1_reveal:
     "我" "她说这句话的时候，确实有点像部长的样子。"
     "" "前提是我忘掉她十分钟前刚从窗户爬进来的事实。"
 
-    jump res://story/chapter2.ks erase
+    jump_id chapter2 erase

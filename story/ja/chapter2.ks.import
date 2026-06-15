@@ -1,0 +1,14 @@
+[remap]
+
+importer="konado.scripts"
+type="Resource"
+uid="uid://dqeca6bmy78jh"
+path="res://.godot/imported/chapter2.ks-d270d55e568479df902fc0b16f0eb8c5.res"
+
+[deps]
+
+source_file="res://story/ja/chapter2.ks"
+dest_files=["res://.godot/imported/chapter2.ks-d270d55e568479df902fc0b16f0eb8c5.res"]
+
+[params]
+

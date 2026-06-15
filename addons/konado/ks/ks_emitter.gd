@@ -98,6 +98,8 @@ func _emit_node(node: KS_AST.ASTNode) -> KND_Dialogue:
 		return _emit_variable(node)
 	if node is KS_AST.JumpNode:
 		return _emit_jump(node)
+	if node is KS_AST.JumpIdNode:
+		return _emit_jump_id(node)
 	if node is KS_AST.JumpBranchNode:
 		return _emit_jump_branch(node)
 	if node is KS_AST.SignalNode:
@@ -296,6 +298,17 @@ func _emit_jump(node: KS_AST.JumpNode) -> KND_Dialogue:
 	d.dialog_type = KND_Dialogue.Type.JUMP
 	d.jump_shot_path = node.target_path
 	# 过渡效果（可选，默认在运行时使用 ALPHA_FADE_EFFECT）
+	if not node.effect.is_empty():
+		d.background_toggle_effects = BACKGROUND_EFFECTS_MAP.get(
+			node.effect, KND_ActingInterface.BackgroundTransitionEffectsType.ALPHA_FADE_EFFECT)
+	return d
+
+
+func _emit_jump_id(node: KS_AST.JumpIdNode) -> KND_Dialogue:
+	var d := KND_Dialogue.new()
+	d.source_file_line = node.line
+	d.dialog_type = KND_Dialogue.Type.JUMP_ID
+	d.jump_chapter_id = node.target_id
 	if not node.effect.is_empty():
 		d.background_toggle_effects = BACKGROUND_EFFECTS_MAP.get(
 			node.effect, KND_ActingInterface.BackgroundTransitionEffectsType.ALPHA_FADE_EFFECT)

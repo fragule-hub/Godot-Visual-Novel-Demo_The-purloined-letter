@@ -3,6 +3,9 @@ extends Node
 ## 跨场景游戏状态单例
 ## 用于在标题界面和游戏场景之间传递存档 ID，以及管理语言切换
 
+## 语言变更信号
+signal language_changed
+
 ## 待加载的存档 ID（-1 表示无待加载存档）
 var pending_save_id: int = -1
 
@@ -31,3 +34,4 @@ func _apply_saved_language() -> void:
 func apply_language(display_name: String) -> void:
 	var locale: String = LANG_MAP.get(display_name, "zh")
 	TranslationServer.set_locale(locale)
+	language_changed.emit()

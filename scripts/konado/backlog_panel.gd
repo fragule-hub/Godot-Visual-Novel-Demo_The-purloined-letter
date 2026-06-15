@@ -88,12 +88,15 @@ func add_entry(character_id: String, text: String) -> void:
 	var entry := HBoxContainer.new()
 	entry.add_theme_constant_override("separation", 12)
 
-	# 角色名（样式从 LabelSettings 资源加载）
+	# 角色名（旁白时隐藏名称）
 	var name_label := Label.new()
-	name_label.text = character_id + ": " if character_id else "??? : "
 	name_label.label_settings = ENTRY_NAME_SETTINGS
-	name_label.custom_minimum_size.x = 120
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	if character_id:
+		name_label.text = character_id + ": "
+		name_label.custom_minimum_size.x = 120
+	else:
+		name_label.visible = false
 
 	# 对话文本
 	var text_label := RichTextLabel.new()

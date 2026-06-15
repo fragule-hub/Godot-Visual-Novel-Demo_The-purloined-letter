@@ -1,0 +1,25 @@
+{
+  "chapters": {
+    "chapter1": {
+      "zh": "res://story/chapter1.ks",
+      "en": "res://story/en/chapter1.ks",
+      "ja": "res://story/ja/chapter1.ks"
+    },
+    "chapter2": {
+      "zh": "res://story/chapter2.ks",
+      "en": "res://story/en/chapter2.ks",
+      "ja": "res://story/ja/chapter2.ks"
+    },
+    "chapter3": {
+      "zh": "res://story/chapter3.ks",
+      "en": "res://story/en/chapter3.ks",
+      "ja": "res://story/ja/chapter3.ks"
+    },
+    "chapter4": {
+      "zh": "res://story/chapter4.ks",
+      "en": "res://story/en/chapter4.ks",
+      "ja": "res://story/ja/chapter4.ks"
+    }
+  },
+  "start_chapter": "chapter1"
+}
