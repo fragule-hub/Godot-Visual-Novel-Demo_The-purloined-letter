@@ -35,6 +35,13 @@ func compile_file(path: String) -> KND_Shot:
 	_errors.clear()
 	_warnings.clear()
 
+	# 优先使用已导入的资源（导出包中 .ks 的 .res 版本可用）
+	if ResourceLoader.exists(path):
+		var res = ResourceLoader.load(path)
+		if res is KND_Shot:
+			return res
+
+	# 编辑器回退：文本编译（开发时 .ks 源文件存在）
 	if not FileAccess.file_exists(path):
 		_report_error(path, 0, "文件不存在，无法打开脚本文件")
 		return null

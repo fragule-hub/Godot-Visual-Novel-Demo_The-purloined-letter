@@ -295,6 +295,8 @@ func _restore_dialogue_state(state: Dictionary) -> void:
 
 	if shot:
 		dialogue_manager.set_shot(shot)
+	elif dialogue_manager.start_dialogue_shot:
+		dialogue_manager.set_shot(dialogue_manager.start_dialogue_shot)
 
 	# 恢复对话节点ID
 	if state.has("current_node_id"):

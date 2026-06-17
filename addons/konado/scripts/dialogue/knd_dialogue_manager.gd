@@ -331,10 +331,11 @@ func init_dialogue(callback: Callable = Callable()) -> void:
 			if shot:
 				cur_dialogue_shot = shot.duplicate()
 				_current_chapter_id = _start_chapter_id
-	elif start_dialogue_shot != null:
-		# 兼容模式：编辑器直接指定 shot
+
+	# 兜底：编译失败或无章节配置时，使用场景内嵌资源
+	if cur_dialogue_shot == null and start_dialogue_shot != null:
 		cur_dialogue_shot = start_dialogue_shot.duplicate()
-	else:
+	elif cur_dialogue_shot == null:
 		push_error("未设置对话镜头且无章节配置")
 		return
 	# 将角色表传给acting_interface
@@ -961,7 +962,7 @@ func _resolve_localized_path(base_path: String) -> String:
 	var dir := base_path.get_base_dir()
 	var file := base_path.get_file()
 	var localized := dir.path_join(locale).path_join(file)
-	if FileAccess.file_exists(localized):
+	if ResourceLoader.exists(localized) or FileAccess.file_exists(localized):
 		return localized
 	return base_path
 
@@ -992,8 +993,8 @@ func get_chapter_path(chapter_id: String) -> String:
 		result = paths[locale]
 	else:
 		result = paths.get("zh", "")
-	# 校验文件存在性
-	if not result.is_empty() and not FileAccess.file_exists(result):
+	# 校验文件存在性（导出包中用 ResourceLoader，编辑器中用 FileAccess）
+	if not result.is_empty() and not ResourceLoader.exists(result) and not FileAccess.file_exists(result):
 		push_warning("章节 %s 的 %s 语言文件不存在：%s，回退中文" % [chapter_id, locale, result])
 		result = paths.get("zh", "")
 	return result

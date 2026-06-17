@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<title>失窃的信</title>
+	<style>
+		* { margin: 0; padding: 0; }
+		body { background: #000; overflow: hidden; }
+		canvas { display: block; }
+		#canvas { width: 100vw; height: 100vh; }
+	</style>
+	<!-- Polyfill: 确保 crossOriginIsolated 在 itch.io sandbox iframe 中不抛出 ReferenceError -->
+	<script>
+		if (typeof crossOriginIsolated === 'undefined') {
+			window.crossOriginIsolated = false;
+		}
+	</script>
+	{{{ SCRIPT }}}
+</head>
+<body>
+	<canvas id="canvas" tabindex="0">
+		HTML5 canvas appears to be unsupported in the current browser.<br>
+		Please update or use a different browser.
+	</canvas>
+	{{{ PLACEHOLDER }}}
+	<script>
+		const canvas = document.getElementById('canvas');
+		const engine = new Engine({
+			canvasResizePolicy: 2,
+			canvas: canvas,
+		});
+		engine.startGame();
+	</script>
+</body>
+</html>
