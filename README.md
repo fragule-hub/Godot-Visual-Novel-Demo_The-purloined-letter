@@ -10,11 +10,11 @@
 
 **中文：**
 
-"暮月学院：失窃的信"是一款以校园为舞台的推理视觉小说。故事围绕暮月学园推理部展开——一封重要的信件神秘失踪，推理部部长克拉拉与副部长"我"、风纪委员长伊芙联手调查，展开一段充满吐槽与意外的轻喜剧推理之旅。本作灵感来源于埃德加·爱伦·坡的经典短篇小说《失窃的信》，核心诡计致敬"藏在明处"的经典设计。
+"暮月学院：失窃的信"是一款以校园为舞台的推理视觉小说。故事围绕暮月学园推理部展开——一封重要的信件神秘失踪，推理部部长克拉拉与副部长"我"、风纪委员长伊芙联手调查，展开一段充满吐槽与意外的轻喜剧推理之旅。本作灵感来源于埃德加·爱伦·坡的经典短篇小说《失窃的信》。
 
 **English:**
 
-*Twilight Moon Academy: The Purloined Letter* is a campus-set mystery visual novel. When an important letter goes missing, the Mystery Club president Clara, vice-president "I", and disciplinary committee chair Eve team up for a comedic investigation full of witty banter and unexpected twists. Inspired by Edgar Allan Poe's classic short story *The Purloined Letter*, the core mystery pays homage to the iconic "hiding in plain sight" concept.
+*Twilight Moon Academy: The Purloined Letter* is a campus-set mystery visual novel. When an important letter goes missing, the Mystery Club president Clara, vice-president "I", and disciplinary committee chair Eve team up for a comedic investigation full of witty banter and unexpected twists. Inspired by Edgar Allan Poe's classic short story *The Purloined Letter*.
 
 ---
 
