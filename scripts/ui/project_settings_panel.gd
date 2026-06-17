@@ -36,6 +36,8 @@ var _confirm_dialog: ConfirmationDialog
 var _overlay: KND_OverlayPanel  ## 由外部设置
 ## 是否显示"返回主界面"按钮（标题界面打开时隐藏，对话场景打开时显示）
 var show_return_btn: bool = true
+## 标签页重建代数（防止 await 期间的信号触发导致重复重建）
+var _rebuild_generation: int = 0
 
 
 func _ready() -> void:
@@ -165,8 +167,12 @@ func _on_setting_changed(category: String, key: String, value: Variant) -> void:
 	if category == "display" and key == "language":
 		GameState.apply_language(value)
 		_apply_localization()
-		# 重建标签页以刷新设置项标签
+		# 代数递增：await 期间再次触发时，旧代数的重建会被跳过
+		_rebuild_generation += 1
+		var gen := _rebuild_generation
 		for child in _tab_container.get_children():
 			child.queue_free()
 		await get_tree().process_frame
+		if gen != _rebuild_generation:
+			return
 		_build_tabs()

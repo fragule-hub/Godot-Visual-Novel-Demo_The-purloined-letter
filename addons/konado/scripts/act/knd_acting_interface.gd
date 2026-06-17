@@ -192,7 +192,7 @@ func change_background_image(tex: Texture, name: String, effects_type: Backgroun
 	var config = TRANSITION_CONFIGS.get(effects_type, TRANSITION_CONFIGS[BackgroundTransitionEffectsType.NONE_EFFECT])
 	
 	# 停止之前的过渡动画
-	if effect_tween and not effect_tween.is_valid():
+	if effect_tween and effect_tween.is_valid():
 		effect_tween.kill()
 		effect_tween = null
 

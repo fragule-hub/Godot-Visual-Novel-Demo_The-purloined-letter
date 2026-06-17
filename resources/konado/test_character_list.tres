@@ -49,11 +49,21 @@ status_texture = ExtResource("9_0qu7k")
 [sub_resource type="Resource" id="Resource_xnvbu"]
 script = ExtResource("1_s25tl")
 chara_name = "Eve"
+display_names = {
+"en": "Eve",
+"ja": "イヴ",
+"zh": "伊芙"
+}
 chara_status = Array[ExtResource("2_b0map")]([SubResource("Resource_bv70c"), SubResource("Resource_qwqo1"), SubResource("Resource_k8syi"), SubResource("Resource_47w4o"), SubResource("Resource_7hwgp"), SubResource("Resource_2o4xx"), SubResource("Resource_cna27")])
 
 [sub_resource type="Resource" id="Resource_6u3h7"]
 script = ExtResource("1_s25tl")
 chara_name = "Clara"
+display_names = {
+"en": "Clara",
+"ja": "クララ",
+"zh": "克拉拉"
+}
 
 [resource]
 script = ExtResource("10_50f0p")

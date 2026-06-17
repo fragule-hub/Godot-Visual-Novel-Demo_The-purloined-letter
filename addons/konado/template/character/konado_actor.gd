@@ -45,6 +45,8 @@ func _ready() -> void:
 	_on_resized()
 
 func _on_resized() -> void:
+	if not slot:
+		return
 	if not texture_rect:
 		print("警告：texture_rect未赋值")
 		return
@@ -121,6 +123,8 @@ func set_character_texture(texture: Texture) -> void:
 ## 跳动动画：向上弹跳指定次数，不阻塞打字
 ## count: 跳动次数, height: 弹跳高度(px), duration: 单次周期时长(s)
 func play_bounce(count: int = 1, height: float = 25.0, duration: float = 0.18) -> void:
+	if not slot:
+		return
 	count = clampi(count, 1, 10)
 	height = clampf(height, 5.0, 200.0)
 	duration = clampf(duration, 0.05, 1.0)

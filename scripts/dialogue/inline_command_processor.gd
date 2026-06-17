@@ -8,6 +8,14 @@ class_name InlineCommandProcessor
 ## 调试日志开关
 const DEBUG_LOG := false
 
+## 内联标签正则（编译一次，复用）
+var _tag_regex: RegEx = _init_tag_regex()
+
+static func _init_tag_regex() -> RegEx:
+	var r := RegEx.new()
+	r.compile("\\{(\\w+):([^}]+)\\}")
+	return r
+
 var _dialogue_manager: KND_DialogueManager
 var _dialogue_box: KND_DialogueBox
 var _acting_interface: KND_ActingInterface
@@ -47,12 +55,7 @@ func _init(dm: KND_DialogueManager, db: KND_DialogueBox, ai: KND_ActingInterface
 func start_line(content: String, chara_id: String) -> void:
 	# 清理上任一行遗留的省略号状态（仅当确实激活过）
 	if _ellipsis_active:
-		if _ellipsis_cycle_timer:
-			_ellipsis_cycle_timer.stop()
-			_ellipsis_cycle_timer.queue_free()
-			_ellipsis_cycle_timer = null
-		_ellipsis_active = false
-		_dialogue_box.hide_ellipsis()
+		_stop_ellipsis_timer()
 
 	var parsed := _parse_tags(content)
 	_commands = parsed.commands
@@ -71,14 +74,11 @@ func start_line(content: String, chara_id: String) -> void:
 
 ## 解析 {tag:value} 标签，返回干净文本和命令列表
 func _parse_tags(raw_text: String) -> Dictionary:
-	var regex := RegEx.new()
-	regex.compile("\\{(\\w+):([^}]+)\\}")
-
 	var commands: Array[Dictionary] = []
 	var clean_text := ""
 	var last_end := 0
 
-	for m in regex.search_all(raw_text):
+	for m in _tag_regex.search_all(raw_text):
 		# 标签前的普通文本
 		clean_text += raw_text.substr(last_end, m.get_start() - last_end)
 		commands.append({
@@ -118,36 +118,17 @@ func _connect_typing_monitor() -> void:
 ## 传统模式：接管 dialogue_box 的 tween
 func _takeover_traditional_tween() -> void:
 	if _commands.is_empty():
-		return  # 无命令时透传 manager 的 tween，不做任何干预
+		return
 	var db_tween := _dialogue_box.typing_tween
 	if DEBUG_LOG: print("[ICP] _takeover: db_tween valid=%s, visible_ratio=%.3f" % [db_tween != null and db_tween.is_valid(), _dialogue_box.dialogue_label.visible_ratio])
 	if db_tween and db_tween.is_valid():
 		_taking_over = true
-		_dialogue_box.typing_tween.kill()  # _taking_over 阻止 finished 信号泄漏到 manager
+		_dialogue_box.typing_tween.kill()
 		_taking_over = false
 		if DEBUG_LOG: print("[ICP]   killed manager tween")
-		var label := _dialogue_box.dialogue_label
-		var current_ratio := label.visible_ratio
-		var remaining_chars := _total_chars - int(current_ratio * float(_total_chars))
-		var remaining_time := remaining_chars * _default_typing_interval
-		_active_tween = get_tree().create_tween()
-		_active_tween.finished.connect(_on_typing_completed)
-		_active_tween.tween_property(label, "visible_ratio", 1.0, remaining_time) \
-			.set_trans(Tween.TRANS_LINEAR)
-		_dialogue_box.typing_tween = _active_tween
-		if DEBUG_LOG: print("[ICP]   created _active_tween from ratio %.3f, remaining=%d, time=%.2f" % [current_ratio, remaining_chars, remaining_time])
 	else:
 		if DEBUG_LOG: print("[ICP]   NO manager tween found — this is the race condition!")
-		var label := _dialogue_box.dialogue_label
-		var remaining_chars := _total_chars - int(label.visible_ratio * float(_total_chars))
-		var remaining_time := remaining_chars * _default_typing_interval
-		_active_tween = get_tree().create_tween()
-		_active_tween.finished.connect(_on_typing_completed)
-		_active_tween.tween_property(label, "visible_ratio", 1.0, remaining_time) \
-			.set_trans(Tween.TRANS_LINEAR)
-		_dialogue_box.typing_tween = _active_tween
-		if DEBUG_LOG: print("[ICP]   created _active_tween (else branch), remaining=%d, time=%.2f" % [remaining_chars, remaining_time])
-	# manager tween 已被 kill，_active_tween 是唯一活跃 tween，重置 suppress
+	_create_typing_tween(_default_typing_interval)
 	_suppress_typing_completed = false
 
 
@@ -352,24 +333,8 @@ func _cycle_ellipsis() -> void:
 
 ## 省略号停顿结束
 func _end_ellipsis_pause() -> void:
-	if _ellipsis_cycle_timer:
-		_ellipsis_cycle_timer.stop()
-		_ellipsis_cycle_timer.queue_free()
-		_ellipsis_cycle_timer = null
-	_ellipsis_active = false
-	_dialogue_box.hide_ellipsis()
-	# 将省略号插入文本，使其成为对话内容的一部分
-	if not _is_fade_in_mode():
-		var label := _dialogue_box.dialogue_label
-		var pos := _ellipsis_cmd_pos
-		var dots := ".".repeat(_ellipsis_max_dots)
-		label.text = label.text.substr(0, pos) + dots + label.text.substr(pos)
-		_total_chars = label.text.length()
-		var shown_chars := pos + dots.length()
-		label.visible_ratio = float(shown_chars) / float(_total_chars)
-		# 后续命令位置因插入省略号而偏移
-		for i in range(_next_cmd_index, _commands.size()):
-			_commands[i].pos += dots.length()
+	_stop_ellipsis_timer()
+	_insert_ellipsis_text()
 	_paused = false
 	if _is_fade_in_mode():
 		_typewriter._playing = true
@@ -386,20 +351,34 @@ func _save_and_kill_tween() -> void:
 
 ## 恢复传统模式：从保存位置重建 tween
 func _resume_traditional() -> void:
-	var label := _dialogue_box.dialogue_label
-	var remaining_chars := _total_chars - int(label.visible_ratio * float(_total_chars))
-	var remaining_time := remaining_chars * _default_typing_interval
-	if DEBUG_LOG: print("[ICP] _resume_traditional: ratio=%.3f remaining=%d time=%.3f active_tween_valid=%s" % [
-		label.visible_ratio, remaining_chars, remaining_time,
-		_active_tween != null and _active_tween.is_valid()
-	])
-	# 先杀掉可能残留的旧 tween（如 speed tween 仍在跑）
-	if _active_tween and _active_tween.is_valid():
-		_active_tween.kill()
-	# 重置 suppress：原始 manager tween 已在 takeover 时被杀，后续完成不应被抑制
+	if DEBUG_LOG: print("[ICP] _resume_traditional: ratio=%.3f total=%d" % [_dialogue_box.dialogue_label.visible_ratio, _total_chars])
 	_suppress_typing_completed = false
+	var remaining_chars := _total_chars - int(_dialogue_box.dialogue_label.visible_ratio * float(_total_chars))
 	if remaining_chars <= 0:
 		if DEBUG_LOG: print("[ICP]   already at end → emit immediately (deferred)")
+		_dialogue_box.typing_completed.emit.call_deferred()
+		return
+	_create_typing_tween(_default_typing_interval)
+
+
+## 变速（传统模式）：从当前位置用新速度重建 tween
+func _restart_traditional_tween(interval: float) -> void:
+	if DEBUG_LOG: print("[ICP] _restart_tween: interval=%.3f, visible_ratio=%.3f, total_chars=%d" % [interval, _dialogue_box.dialogue_label.visible_ratio, _total_chars])
+	_create_typing_tween(interval)
+
+
+# ============================================================
+# 工具方法
+# ============================================================
+
+## 从当前 visible_ratio 重建打字 tween（resume / speed / takeover 共用）
+func _create_typing_tween(interval: float) -> void:
+	var label := _dialogue_box.dialogue_label
+	if _active_tween and _active_tween.is_valid():
+		_active_tween.kill()
+	var remaining_chars := _total_chars - int(label.visible_ratio * float(_total_chars))
+	var remaining_time := remaining_chars * interval
+	if remaining_chars <= 0:
 		_dialogue_box.typing_completed.emit.call_deferred()
 		return
 	_active_tween = get_tree().create_tween()
@@ -409,25 +388,30 @@ func _resume_traditional() -> void:
 	_dialogue_box.typing_tween = _active_tween
 
 
-## 变速（传统模式）：从当前位置用新速度重建 tween
-func _restart_traditional_tween(interval: float) -> void:
+## 停止并释放省略号循环计时器
+func _stop_ellipsis_timer() -> void:
+	if _ellipsis_cycle_timer:
+		_ellipsis_cycle_timer.stop()
+		_ellipsis_cycle_timer.queue_free()
+		_ellipsis_cycle_timer = null
+	_ellipsis_active = false
+	_dialogue_box.hide_ellipsis()
+
+
+## 将省略号文本插入 RichTextLabel 并偏移后续命令位置
+func _insert_ellipsis_text() -> void:
+	if _is_fade_in_mode():
+		return
 	var label := _dialogue_box.dialogue_label
-	if DEBUG_LOG: print("[ICP] _restart_tween: interval=%.3f, visible_ratio=%.3f, total_chars=%d" % [interval, label.visible_ratio, _total_chars])
-	if _active_tween and _active_tween.is_valid():
-		_active_tween.kill()
-	var remaining_chars := _total_chars - int(label.visible_ratio * float(_total_chars))
-	var remaining_time := remaining_chars * interval
-	_active_tween = get_tree().create_tween()
-	_active_tween.finished.connect(_on_typing_completed)
-	_active_tween.tween_property(label, "visible_ratio", 1.0, remaining_time) \
-		.set_trans(Tween.TRANS_LINEAR)
-	_dialogue_box.typing_tween = _active_tween
-	if DEBUG_LOG: print("[ICP]   new tween: remaining=%d, time=%.3f" % [remaining_chars, remaining_time])
+	var pos := _ellipsis_cmd_pos
+	var dots := ".".repeat(_ellipsis_max_dots)
+	label.text = label.text.substr(0, pos) + dots + label.text.substr(pos)
+	_total_chars = label.text.length()
+	var shown_chars := pos + dots.length()
+	label.visible_ratio = float(shown_chars) / float(_total_chars)
+	for i in range(_next_cmd_index, _commands.size()):
+		_commands[i].pos += dots.length()
 
-
-# ============================================================
-# 工具方法
-# ============================================================
 
 func _is_fade_in_mode() -> bool:
 	return _dialogue_box.typewriter_mode == KND_DialogueBox.TypewriterMode.FADE_IN_TYPEWRITER
@@ -469,21 +453,9 @@ func skip_anim() -> void:
 	_skipped = true
 	_suppress_typing_completed = true
 	_in_typing_handler = true
-	# 省略号停顿期间跳过
 	if _ellipsis_active:
-		if _ellipsis_cycle_timer:
-			_ellipsis_cycle_timer.stop()
-			_ellipsis_cycle_timer.queue_free()
-			_ellipsis_cycle_timer = null
-		_ellipsis_active = false
-		_dialogue_box.hide_ellipsis()
-		# 将省略号插入文本
-		if not _is_fade_in_mode():
-			var label := _dialogue_box.dialogue_label
-			var pos := _ellipsis_cmd_pos
-			var dots := ".".repeat(_ellipsis_max_dots)
-			label.text = label.text.substr(0, pos) + dots + label.text.substr(pos)
-			_total_chars = label.text.length()
+		_stop_ellipsis_timer()
+		_insert_ellipsis_text()
 	if _is_fade_in_mode():
 		_typewriter.skip()
 	else:

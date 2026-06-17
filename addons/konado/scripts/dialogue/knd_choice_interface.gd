@@ -42,9 +42,9 @@ func display_options(choices: Array[KND_DialogueChoice], manager: KND_DialogueMa
 		# 选项触发
 		choiceButton.pressed.connect(
 			func():
+				choiceButton.set_disabled(true)
 				await get_tree().process_frame
 				manager.on_option_triggered(choice)
-				choiceButton.set_disabled(true)
 				print_rich("[color=green]选项被触发: [/color]"+str(choice))
 				)
 		choiceButton.gui_input.connect(func(event: InputEvent):

@@ -57,6 +57,10 @@ var _panel_open_count: int = 0
 var _auto_play_timer_generation: int = 0
 var _process_next_frame: int = -1
 
+## 当前句配音状态（由 isfinishtyping 回调读取，替代 bind 传参避免信号泄漏）
+var _pending_wait_voice: bool = false
+var _pending_voice_wait_time: float = 0.0
+
 ## 章节路径映射（从 chapter_map.json 加载）
 var _chapter_map: Dictionary = {}
 ## 起始章节 ID（从配置读取）
@@ -65,6 +69,21 @@ var _start_chapter_id: String = "chapter1"
 var _current_chapter_id: String = ""
 ## KS 脚本编译器（运行时编译 .ks 文件为 KND_Shot）
 var _ks_compiler: KS_Compiler = KS_Compiler.new()
+
+## 变量插值正则（编译一次，复用）
+var _var_regex: RegEx = _init_var_regex()
+## 内联标签剥离正则（编译一次，复用，reload_for_locale_change 使用）
+var _tag_strip_regex: RegEx = _init_tag_strip_regex()
+
+static func _init_var_regex() -> RegEx:
+	var r := RegEx.new()
+	r.compile("([%$])(\\w+)")
+	return r
+
+static func _init_tag_strip_regex() -> RegEx:
+	var r := RegEx.new()
+	r.compile("\\{\\w+:[^}]+\\}")
+	return r
 
 ## 对话打字播放速度
 @export var _typing_interval: float = 0.04
@@ -237,6 +256,7 @@ func _ready() -> void:
 	
 	if _konado_dialogue_box:
 		_konado_dialogue_box.on_dialogue_click.connect(_process_next)
+		_konado_dialogue_box.typing_completed.connect(isfinishtyping)
 	else:
 		push_error("未指定 _konado_dialogue_box")
 		
@@ -342,6 +362,7 @@ func init_dialogue(callback: Callable = Callable()) -> void:
 ## 设置对话数据的方法
 func set_shot(new_shot: KND_Shot) -> void:
 	cur_dialogue_shot = new_shot.duplicate()
+	_current_chapter_id = ""  # 由调用方在需要时覆盖
 	_temp_variables.clear()
 	if cur_dialogue_shot.start_node_id and not cur_dialogue_shot.start_node_id.is_empty():
 		cur_node_id = cur_dialogue_shot.start_node_id
@@ -440,11 +461,9 @@ func _process(delta) -> void:
 					if voice_id:
 						print("[KND_DialogueManager] 尝试播放语音: \"%s\"" % str(voice_id))
 						voice_wait_time = _play_voice(voice_id)
-					
-					if _konado_dialogue_box.typing_completed.is_connected(isfinishtyping):
-						_konado_dialogue_box.typing_completed.disconnect(isfinishtyping)
-					
-					_konado_dialogue_box.typing_completed.connect(isfinishtyping.bind(playvoice, voice_wait_time))
+
+					_pending_wait_voice = playvoice
+					_pending_voice_wait_time = voice_wait_time
 					# 设置角色高亮
 					if actor_auto_highlight:
 						if chara_id:
@@ -509,7 +528,7 @@ func _process(delta) -> void:
 					if dialog_choices.size() <= 0:
 						printerr("当前没有任何选项，为不影响运行跳过")
 						_dialogue_goto_state(DialogState.PAUSED)
-						get_tree().process_frame
+						await get_tree().process_frame
 						_process_next()
 					else:
 						print_rich("[color=green]显示选项，共 %d 个选项[/color]" % dialog_choices.size())
@@ -620,6 +639,7 @@ func _process(delta) -> void:
 					var content = dialog.custom_signal_name
 					custom_signal.emit(content)
 					await get_tree().process_frame
+					if not is_inside_tree(): return
 					_dialogue_goto_state(DialogState.PAUSED)
 					_process_next()
 				# 解锁成就
@@ -627,21 +647,21 @@ func _process(delta) -> void:
 					if achievement_mgr:
 						achievement_mgr.unlock_achievement(dialog.achievement_id)
 					_dialogue_goto_state(DialogState.PAUSED)
-					get_tree().process_frame
+					await get_tree().process_frame
 					_process_next()
 				# 更新成就进度
 				elif cur_dialogue_type == KND_Dialogue.Type.ACHIEVEMENT_PROGRESS:
 					if achievement_mgr:
 						achievement_mgr.increment_progress(dialog.achievement_id, dialog.achievement_value)
 					_dialogue_goto_state(DialogState.PAUSED)
-					get_tree().process_frame
+					await get_tree().process_frame
 					_process_next()
 				# 设置成就标志位
 				elif cur_dialogue_type == KND_Dialogue.Type.ACHIEVEMENT_FLAG:
 					if achievement_mgr:
 						achievement_mgr.set_flag(dialog.achievement_flag_name, dialog.achievement_flag_value)
 					_dialogue_goto_state(DialogState.PAUSED)
-					get_tree().process_frame
+					await get_tree().process_frame
 					_process_next()
 				# 变量操作
 				elif cur_dialogue_type == KND_Dialogue.Type.SET_VARIABLE:
@@ -677,13 +697,13 @@ func _process(delta) -> void:
 				
 		
 ## 打字完成回调
-func isfinishtyping(wait_voice: bool, wait_voice_time: float) -> void:
+func isfinishtyping() -> void:
 	_dialogue_goto_state(DialogState.PAUSED)
-	
+
 	# 面板打开时不推进
 	if _panel_open_count > 0:
 		return
-	
+
 	# 非自动播放：仅处理"下一句是选项"的自动推进
 	if not _auto_play_enabled:
 		var current = _current_dialogue()
@@ -693,12 +713,13 @@ func isfinishtyping(wait_voice: bool, wait_voice_time: float) -> void:
 			if nd != null and nd.dialog_type == KND_Dialogue.Type.SHOW_CHOICE:
 				if DEBUG_LOG: print("选项自动下一个")
 				await get_tree().create_timer(0.05).timeout
+				if not is_inside_tree(): return
 				_process_next()
 		if DEBUG_LOG: print("触发打字完成信号")
 		return
 
 	# 自动播放：统一走 timer（配音用 voice 时长，否则用用户设置延迟）
-	var delay: float = wait_voice_time if wait_voice else _auto_play_delay
+	var delay: float = _pending_voice_wait_time if _pending_wait_voice else _auto_play_delay
 	_start_auto_play_timer(delay)
 	if DEBUG_LOG: print("触发打字完成信号")
 
@@ -921,11 +942,16 @@ func _display_character(dialogue: KND_Dialogue) -> void:
 	_acting_interface.create_new_character(target_chara_name, horizontal_division, pos.x, target_state_name, target_state_tex)
 		
 ## 将对话显示名映射为演员内部 ID
+## 优先精确匹配 chara_name（内部 ID），再按 display_names 字典查找
 func _resolve_actor_id(display_name: String) -> String:
-	match display_name:
-		"克拉拉", "Clara", "クララ": return "Clara"
-		"伊芙", "Eve", "イヴ":       return "Eve"
-		_:                            return display_name
+	if chara_list == null:
+		return display_name
+	for chara in chara_list.characters:
+		if chara.chara_name == display_name:
+			return display_name
+		if chara.display_names.values().has(display_name):
+			return chara.chara_name
+	return display_name
 
 ## 根据当前 locale 解析本地化脚本路径（不存在时回退原路径）
 func _resolve_localized_path(base_path: String) -> String:
@@ -1022,11 +1048,12 @@ func reload_for_locale_change() -> void:
 		cur_node_id = saved_node_id
 	else:
 		cur_node_id = cur_dialogue_shot.start_node_id
-	# 刷新当前显示
+	# 刷新当前显示（剥离内联标签，避免显示原始命令文本）
 	var dialog = _current_dialogue()
 	if dialog and dialog.dialog_type == KND_Dialogue.Type.ORDINARY_DIALOG:
 		var content := _interpolate_variables(dialog.dialog_content)
-		_konado_dialogue_box.dialogue_text = content
+		var clean_content := _tag_strip_regex.sub(content, "", true)
+		_konado_dialogue_box.dialogue_text = clean_content
 		_konado_dialogue_box.character_name = dialog.character_id
 
 
@@ -1176,10 +1203,7 @@ func _interpolate_variables(text: String) -> String:
 		return text
 
 	var result = text
-	var regex = RegEx.new()
-	regex.compile("([%$])(\\w+)")
-
-	var matches = regex.search_all(text)
+	var matches = _var_regex.search_all(text)
 	var offset = 0
 
 	for match in matches:

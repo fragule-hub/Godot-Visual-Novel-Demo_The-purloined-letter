@@ -159,7 +159,7 @@ size_flags_vertical = 3
 
 [node name="VersionLabel" type="Label" parent="MainLayout/LeftPanel/VBox" unique_id=-656682372]
 layout_mode = 2
-text = "v0.2"
+text = "v1.0"
 label_settings = SubResource("LabelSettings_version")
 horizontal_alignment = 2
 

@@ -42,6 +42,9 @@ func _ready() -> void:
 	_backlog_overlay.opened.connect(_on_panel_opened)
 	_backlog_overlay.closed.connect(_on_panel_closed)
 
+	# 对话框滚轮到顶 → 打开回顾
+	dialogue_manager._konado_dialogue_box.scroll_up_at_top.connect(_backlog_overlay.open)
+
 	var recorder := BacklogRecorder.new()
 	recorder.backlog_panel = _backlog_panel
 	add_child(recorder)
@@ -87,11 +90,6 @@ func _ready() -> void:
 		bridge.settings_panel_opened.connect(_on_panel_opened)
 		bridge.settings_panel_closed.connect(_on_panel_closed)
 
-	# ── 语言变更订阅 ──
-	var settings_mgr := get_node_or_null("/root/KND_Settings")
-	if settings_mgr and settings_mgr.has_signal("setting_changed"):
-		settings_mgr.setting_changed.connect(_on_setting_changed)
-
 	# ── 底部按钮本地化 ──
 	_apply_ui_localization()
 
@@ -121,13 +119,10 @@ func _start_game() -> void:
 	dialogue_manager.start_dialogue()
 
 
-func _input(event: InputEvent) -> void:
+func _input(_event: InputEvent) -> void:
 	if _is_any_panel_open():
 		return
-	if event is InputEventMouseButton \
-			and event.button_index == MOUSE_BUTTON_WHEEL_UP:
-		_backlog_overlay.open()
-		get_viewport().set_input_as_handled()
+	# 滚轮上 → 打开回顾 的逻辑已迁移到对话盒的 scroll_up_at_top 信号
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -188,6 +183,10 @@ func _on_shot_end() -> void:
 func _on_language_changed() -> void:
 	if dialogue_manager:
 		dialogue_manager.reload_for_locale_change()
+	_apply_ui_localization()
+	# 刷新回顾面板标题
+	if _backlog_panel:
+		_backlog_panel._title_label.text = tr("backlog_title")
 
 
 func _apply_ui_localization() -> void:
@@ -213,12 +212,3 @@ func _apply_ui_localization() -> void:
 	var return_btn := get_node_or_null(base + "Return")
 	if return_btn is Button:
 		return_btn.text = tr("btn_return_title")
-
-
-func _on_setting_changed(category: String, key: String, value: Variant) -> void:
-	if category == "display" and key == "language":
-		GameState.apply_language(value)
-		_apply_ui_localization()
-		# 刷新回顾面板标题
-		if _backlog_panel:
-			_backlog_panel._title_label.text = tr("backlog_title")

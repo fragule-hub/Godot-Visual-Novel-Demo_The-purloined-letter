@@ -89,9 +89,10 @@ tint_progress = Color(0.68326306, 0.28966337, 0.5552192, 1)
 
 [node name="dialogue_label" type="RichTextLabel" parent="dialogue_container/VBoxContainer" unique_id=604101149]
 unique_name_in_owner = true
-clip_contents = false
+clip_contents = true
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
+scroll_active = false
 theme_override_colors/default_color = Color(1, 1, 1, 1)
 
 [node name="KND_TypewriterText" type="Control" parent="dialogue_container/VBoxContainer" unique_id=1544237387]

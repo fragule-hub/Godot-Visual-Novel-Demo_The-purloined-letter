@@ -18,6 +18,9 @@ signal on_character_name_click
 ## 打字完成
 signal typing_completed
 
+## 滚轮滚动到顶部（用于外部打开回顾面板）
+signal scroll_up_at_top
+
 ## 对话框显示动画完成
 signal on_dialogue_show_completed
 
@@ -40,6 +43,7 @@ signal on_dialogue_hide_completed
 @export var dialogue_text: String= "":
 	set(value):
 		dialogue_text = value
+		_reset_scroll_state()
 		update_dialogue_content()
 
 @export var dialogue_font_size: int = 24     ## 对话文本字体大小（新增）
@@ -87,6 +91,7 @@ var _sfx_volume: float = 1.0
 # 音效状态变量 - 记录上一次播放时间、当前随机间隔
 var last_audio_play_time: float = 0.0
 var current_random_interval: float = 0.0
+var _audio_accumulator: float = 0.0
 
 # 透明度过渡动画Tween
 var fade_tween: Tween = null
@@ -105,6 +110,20 @@ var typing_tween: Tween = null
 
 # 省略号停顿
 var _ellipsis_label: Label = null
+
+# ── 滚动会话防误触 ──
+var _scroll_session_active: bool = false
+var _last_scroll_time_ms: int = 0
+var _needs_scroll_top_reset: bool = false
+const SCROLL_SESSION_TIMEOUT_MS: int = 150
+
+# ── 打字滚动缓存（避免每帧重复计算） ──
+var _last_visible_ratio: float = -1.0
+var _overflowing_cached: bool = false
+var _overflow_cache_dirty: bool = true
+
+# ── 打字 Tween 代数（防止 await 期间重复赋值导致 Tween 竞争） ──
+var _typing_generation: int = 0
 
 
 func _ready() -> void:
@@ -217,6 +236,7 @@ func show_dialogue_box() -> void:
 func update_dialogue():
 	if not is_inside_tree():
 		return
+	_reset_scroll_state()
 	update_character_name()
 	update_dialogue_content()
 	
@@ -253,6 +273,7 @@ func update_dialogue_content() -> void:
 			typing_tween = null
 		dialogue_label.text = ""
 		dialogue_label.visible_ratio = 1.0
+		_reset_scroll_state()
 		return
 	
 	# 每次更新对话内容时，重新应用主题设置（确保字体大小/颜色生效）
@@ -273,17 +294,21 @@ func update_dialogue_content() -> void:
 			typewriter_text.set_bbcode(dialogue_text, true)
 	else:
 		# 传统模式
+		_typing_generation += 1
+		var gen := _typing_generation
 		dialogue_label.visible_ratio = 0
-		dialogue_label.text = dialogue_text  # 恢复原生text赋值，无需BBCode
+		dialogue_label.text = dialogue_text
 		await get_tree().process_frame
-		
+		if gen != _typing_generation:
+			return  # 已被更新覆盖，放弃旧 tween
+
 		# 停止原有打字动画
 		if typing_tween != null and typing_tween.is_running():
 			typing_tween.kill()
-		
+
 		# 创建新的打字动画
 		typing_tween = get_tree().create_tween()
-		typing_tween.finished.connect(func(): 
+		typing_tween.finished.connect(func():
 			typing_completed.emit())
 		# 优化：按**字符数**计算总时长
 		var total_typing_time = dialogue_text.length() * typing_interval
@@ -318,23 +343,47 @@ func skip_typing_anim() -> void:
 			current_random_interval = randf_range(min_audio_interval, max_audio_interval)
 			typing_completed.emit()
 
+
+## 当前是否正在打字
+func _is_currently_typing() -> bool:
+	if typewriter_mode == TypewriterMode.FADE_IN_TYPEWRITER:
+		return typewriter_text != null and typewriter_text.is_playing() and not dialogue_text.is_empty()
+	return typing_tween and typing_tween.is_running() and not dialogue_text.is_empty()
+
+
 func _process(delta: float) -> void:
 	# 仅当打字动画运行、文本非空时，处理音效逻辑
-	var is_typing = false
-	if typewriter_mode == TypewriterMode.FADE_IN_TYPEWRITER:
-		# 淡入打字机模式
-		is_typing = typewriter_text != null and typewriter_text.is_playing() and not dialogue_text.is_empty()
-	else:
-		# 传统模式
-		is_typing = typing_tween and typing_tween.is_running() and not dialogue_text.is_empty()
+	var is_typing := _is_currently_typing()
+
+	# ── 打字期间自动滚动 ──
+	if is_typing:
+		var current_ratio := dialogue_label.visible_ratio
+		if current_ratio != _last_visible_ratio:
+			_overflow_cache_dirty = true
+			_last_visible_ratio = current_ratio
+
+		if _is_dialogue_overflowing():
+			dialogue_label.scroll_active = true
+			if _needs_scroll_top_reset:
+				var v_scroll := dialogue_label.get_v_scroll_bar()
+				if v_scroll:
+					v_scroll.value = 0
+				_needs_scroll_top_reset = false
+			else:
+				var v_scroll := dialogue_label.get_v_scroll_bar()
+				if v_scroll:
+					var content_h := float(dialogue_label.get_content_height())
+					var label_h := float(dialogue_label.size.y)
+					v_scroll.value = maxi(0, int(content_h * current_ratio - label_h))
+		else:
+			_needs_scroll_top_reset = false
 	
 	if not is_typing:
+		_audio_accumulator = 0.0
 		return
-	
-	# 获取当前运行时间（秒），用于计算时间间隔
-	var current_time = Time.get_unix_time_from_system()
-	# 距离上一次播放音效的时间差
-	var time_since_last_play = current_time - last_audio_play_time
+
+	_audio_accumulator += delta
+	var time_since_last_play = _audio_accumulator - last_audio_play_time
 	
 	if enable_typing_effect_audio:
 		var should_play = false
@@ -352,18 +401,106 @@ func _process(delta: float) -> void:
 			audio_player.stop()
 			audio_player.play()
 			# 更新上一次播放时间
-			last_audio_play_time = current_time
+			last_audio_play_time = _audio_accumulator
 			# 重新生成随机间隔（每次播放后更新，保证间隔不重复）
 			current_random_interval = randf_range(min_audio_interval, max_audio_interval)
 
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.is_pressed():
-		on_dialogue_click.emit()
+	if not event is InputEventMouseButton or not event.is_pressed():
+		return
+	
+	# ── 滚轮 → 走滚动会话逻辑 ──
+	if event.button_index == MOUSE_BUTTON_WHEEL_UP or \
+	   event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		_handle_scroll_wheel(event)
+		return
+	
+	# 非滚轮点击 → 推进对话
+	on_dialogue_click.emit()
 		
 func _input(event: InputEvent) -> void:
-	# 可以根据需要绑定其他
+	# 键盘：保留原有行为
 	if event.is_action_pressed("ui_accept") || event.is_action_pressed("ui_select"):
 		on_dialogue_click.emit()
+
+	# 全局滚轮：仅当鼠标不在对话框区域内时处理（避免与 _gui_input 重复）
+	if event is InputEventMouseButton and event.is_pressed():
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP or \
+		   event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			if _is_dialogue_overflowing() and not get_global_rect().has_point(get_global_mouse_position()):
+				_handle_scroll_wheel(event)
+
+
+## 检测文字是否超出可见区域
+func _is_dialogue_overflowing() -> bool:
+	if not dialogue_label:
+		return false
+	if not _overflow_cache_dirty:
+		return _overflowing_cached
+	var content_h := dialogue_label.get_content_height()
+	var visible_h := dialogue_label.size.y
+	_overflowing_cached = content_h > visible_h + 4
+	_overflow_cache_dirty = false
+	return _overflowing_cached
+
+
+## 重置滚动状态（新对话开始时调用）
+func _reset_scroll_state() -> void:
+	if not dialogue_label:
+		return
+	dialogue_label.scroll_active = false
+	dialogue_label.scroll_following = false
+	_scroll_session_active = false
+	_last_scroll_time_ms = 0
+	_needs_scroll_top_reset = true
+	_overflow_cache_dirty = true
+	_last_visible_ratio = -1.0
+
+
+## 滚轮滚动会话处理（防误触 + 边界让位）
+func _handle_scroll_wheel(event: InputEventMouseButton) -> void:
+	# ── 打字中：下滚 = 跳过动画，上滚 = 忽略 ──
+	if _is_currently_typing():
+		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			on_dialogue_click.emit()
+		accept_event()
+		return
+
+	if not _is_dialogue_overflowing():
+		# 文字不溢出：滚轮 = 推进对话
+		on_dialogue_click.emit()
+		return
+
+	var now := Time.get_ticks_msec()
+	var is_new_session := (now - _last_scroll_time_ms) > SCROLL_SESSION_TIMEOUT_MS
+	_last_scroll_time_ms = now
+
+	var v_scroll := dialogue_label.get_v_scroll_bar()
+	if v_scroll == null:
+		return
+
+	var scrolling_up := event.button_index == MOUSE_BUTTON_WHEEL_UP
+	var max_val := int(v_scroll.max_value)
+	var at_top: bool = v_scroll.value <= 0
+	var at_bottom: bool = v_scroll.value >= max_val - int(v_scroll.page)
+	var at_boundary: bool = (scrolling_up and at_top) or (not scrolling_up and at_bottom)
+
+	# ── 新会话且已在边界 → 让位给推进 / 回顾 ──
+	if is_new_session and at_boundary:
+		if scrolling_up and at_top:
+			scroll_up_at_top.emit()
+		else:
+			on_dialogue_click.emit()
+		_scroll_session_active = false
+		return
+
+	# ── 会话中滚动文字 ──
+	_scroll_session_active = true
+	var step := int(v_scroll.page * 0.3)
+	if scrolling_up:
+		v_scroll.value = maxi(0, v_scroll.value - step)
+	else:
+		v_scroll.value = mini(max_val - int(v_scroll.page), v_scroll.value + step)
 
 func _on_button_pressed() -> void:
 	on_button_pressed.emit()

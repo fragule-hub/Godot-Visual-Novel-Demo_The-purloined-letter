@@ -25,7 +25,7 @@ const SAVE_EXT = ".kns"
 @export var max_save_slots: int = 20
 
 ## 自动存档间隔（秒）
-@export var auto_save_interval: float = 5.0
+@export var auto_save_interval: float = 30.0
 
 ## 是否启用自动存档
 @export var enable_auto_save: bool = true
@@ -270,12 +270,9 @@ func _capture_dialogue_state() -> Dictionary:
 	var pre := dialogue_manager._pre_break_save
 	var use_pre := not pre.is_empty()
 
-	# 保存当前镜头
-	# 优先保存章节 ID（语言无关），回退到 shot_path
+	# 保存章节 ID（语言无关）
 	if not dialogue_manager._current_chapter_id.is_empty():
 		state["chapter_id"] = dialogue_manager._current_chapter_id
-	elif dialogue_manager.cur_dialogue_shot:
-		state["shot_path"] = dialogue_manager.cur_dialogue_shot.ks_path
 
 	# node_id：有转场快照时用快照的（跳过 scene_break），否则用当前的
 	state["current_node_id"] = pre["node_id"] if use_pre else dialogue_manager.cur_node_id
@@ -283,63 +280,43 @@ func _capture_dialogue_state() -> Dictionary:
 	# 保存对话状态
 	state["dialogue_state"] = dialogue_manager.dialogueState
 
-	# 保存当前对话内容：有快照时用快照的（当前已被清空）
-	if dialogue_manager._konado_dialogue_box:
-		state["current_dialog_content"] = pre.get("dialogue_text", "") if use_pre else dialogue_manager._konado_dialogue_box.dialogue_text
-		state["current_character_name"] = pre.get("character_name", "") if use_pre else dialogue_manager._konado_dialogue_box.character_name
-	else:
-		if dialogue_manager.cur_dialogue_shot:
-			var current_dialog = dialogue_manager._current_dialogue()
-			if current_dialog and current_dialog.dialog_content:
-				state["current_dialog_content"] = current_dialog.dialog_content
-
 	return state
 
 ## 恢复对话状态
 func _restore_dialogue_state(state: Dictionary) -> void:
 	var shot: KND_Shot = null
 
-	# 优先使用 chapter_id 查表（语言自适应）
+	# 使用 chapter_id 查表（按当前语言加载对应 .ks 文件）
 	if state.has("chapter_id") and not state["chapter_id"].is_empty():
 		var path := dialogue_manager.get_chapter_path(state["chapter_id"])
 		if path:
 			shot = dialogue_manager._ks_compiler.compile_file(path)
 			dialogue_manager._current_chapter_id = state["chapter_id"]
 
-	# 回退：旧存档使用 shot_path（可能是 .tres 资源或 .ks 文件）
-	if shot == null and state.has("shot_path") and state["shot_path"]:
-		var sp: String = state["shot_path"]
-		if sp.ends_with(".ks"):
-			shot = dialogue_manager._ks_compiler.compile_file(sp)
-		else:
-			shot = load(sp) as KND_Shot
-
 	if shot:
 		dialogue_manager.set_shot(shot)
-	
+
 	# 恢复对话节点ID
 	if state.has("current_node_id"):
 		var node_id: String = state["current_node_id"]
 		if dialogue_manager.cur_dialogue_shot and dialogue_manager.cur_dialogue_shot.find_node(node_id) != null:
 			dialogue_manager.cur_node_id = node_id
 		elif dialogue_manager.cur_dialogue_shot:
-			# 节点ID无效，回退到起始节点
 			dialogue_manager.cur_node_id = dialogue_manager.cur_dialogue_shot.start_node_id
 		else:
 			dialogue_manager.cur_node_id = ""
-	
+
 	# 恢复对话状态
 	if state.has("dialogue_state"):
 		dialogue_manager._dialogue_goto_state(state["dialogue_state"])
-	
-	# 恢复对话框内容
+
+	# 恢复对话框内容：从新编译的脚本读取当前语言的文本
 	if dialogue_manager._konado_dialogue_box:
-		if state.has("current_dialog_content"):
-			dialogue_manager._konado_dialogue_box.dialogue_text = state["current_dialog_content"]
-			if DEBUG_LOG: print("恢复对话内容: " + state["current_dialog_content"])
-		if state.has("current_character_name"):
-			dialogue_manager._konado_dialogue_box.character_name = state["current_character_name"]
-			if DEBUG_LOG: print("恢复角色名称: " + state["current_character_name"])
+		var dialog = dialogue_manager._current_dialogue()
+		if dialog and dialog.dialog_type == KND_Dialogue.Type.ORDINARY_DIALOG:
+			var content := dialogue_manager._interpolate_variables(dialog.dialog_content)
+			dialogue_manager._konado_dialogue_box.dialogue_text = content
+			dialogue_manager._konado_dialogue_box.character_name = dialog.character_id
 
 ## 捕获音频状态
 func _capture_audio_state() -> Dictionary:

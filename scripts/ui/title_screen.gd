@@ -6,6 +6,7 @@ extends Control
 const CompositePortraitScene: PackedScene = preload("res://scenes/portrait/composite_portrait.tscn")
 const ClaraPortraitDBRes: Resource = preload("res://resources/portrait/clara/clara_portrait_db.tres")
 const SavePanelScene: PackedScene = preload("res://scenes/ui/project_save_panel.tscn")
+const LangToggleBtnScene: PackedScene = preload("res://scenes/ui/lang_toggle_btn.tscn")
 
 # ── 节点引用（通过 Unique Name 获取） ──
 @onready var _new_game_btn: Button = %NewGameBtn
@@ -36,19 +37,19 @@ var _save_overlay: KND_OverlayPanel
 var _settings_overlay: KND_OverlayPanel
 @warning_ignore("unused_private_class_variable") var _credits_overlay: KND_OverlayPanel
 var _save_system: KND_SaveSystem
+var _lang_btn: LangToggleBtn
 
 
 func _ready() -> void:
 	_init_clara()
 	_init_save_system()
+	_init_lang_btn()
 	_connect_buttons()
 	_clara_click_area.gui_input.connect(_on_clara_input)
 	_play_title_bgm()
 	_apply_localization()
-	# 订阅语言变更
-	var mgr := get_node_or_null("/root/KND_Settings")
-	if mgr and mgr.has_signal("setting_changed"):
-		mgr.setting_changed.connect(_on_setting_changed)
+	# 统一监听语言变更信号
+	GameState.language_changed.connect(_on_language_changed)
 
 
 # ============================================================
@@ -76,6 +77,29 @@ func _init_save_system() -> void:
 	_save_system = KND_SaveSystem.new()
 	_save_system.enable_auto_save = false
 	add_child(_save_system)
+
+
+# ============================================================
+# 语言切换按钮
+# ============================================================
+
+func _init_lang_btn() -> void:
+	_lang_btn = LangToggleBtnScene.instantiate() as LangToggleBtn
+	# 锚定到右上角
+	_lang_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_lang_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_lang_btn.offset_left = -120
+	_lang_btn.offset_top = 16
+	_lang_btn.offset_right = -16
+	_lang_btn.offset_bottom = 92
+	add_child(_lang_btn)
+
+
+func _on_language_changed() -> void:
+	_apply_localization()
+	if _lang_btn:
+		_lang_btn._sync_index_from_locale()
+		_lang_btn._update_display()
 
 
 # ============================================================
@@ -292,9 +316,3 @@ func _apply_localization() -> void:
 	_settings_btn.text = tr("btn_settings")
 	_credits_btn.text = tr("btn_credits")
 	_quit_btn.text = tr("btn_quit")
-
-
-func _on_setting_changed(category: String, key: String, value: Variant) -> void:
-	if category == "display" and key == "language":
-		GameState.apply_language(value)
-		_apply_localization()
