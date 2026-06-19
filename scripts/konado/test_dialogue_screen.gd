@@ -119,12 +119,6 @@ func _start_game() -> void:
 	dialogue_manager.start_dialogue()
 
 
-func _input(_event: InputEvent) -> void:
-	if _is_any_panel_open():
-		return
-	# 滚轮上 → 打开回顾 的逻辑已迁移到对话盒的 scroll_up_at_top 信号
-
-
 func _unhandled_input(event: InputEvent) -> void:
 	if _is_any_panel_open():
 		if event.is_action_pressed("ui_cancel"):

@@ -61,9 +61,7 @@ var _process_next_frame: int = -1
 var _pending_wait_voice: bool = false
 var _pending_voice_wait_time: float = 0.0
 
-## 打字动画所属节点 ID（防御旧 tween 的 finished 信号延迟触发）
-## Godot 4.7 中 kill tween 后已排队的 finished 回调仍会触发，
-## 导致 isfinishtyping 误将新节点状态回退为 PAUSED。
+## 打字动画所属节点 ID（防御旧 tween finished 信号延迟触发）
 var _typing_node_id: String = ""
 
 ## 章节路径映射（从 chapter_map.json 加载）
@@ -567,7 +565,6 @@ func _process(delta) -> void:
 					_process_next()
 				# if-else流程控制分支
 				elif cur_dialogue_type == KND_Dialogue.Type.IFELSE_BRANCH:
-					print("ifelse流程控制分支")
 					var condition_met = false
 					var current_value: Variant = null
 
@@ -612,7 +609,7 @@ func _process(delta) -> void:
 							_dialogue_goto_state(DialogState.OFF)
 				# 如果是分支对话
 				elif cur_dialogue_type == KND_Dialogue.Type.BRANCH:
-					print_rich("[color=orange]分支对话（已弃用）[/color]")
+					# Deprecated - 保留兼容性
 					if not dialog.next_id.is_empty():
 						cur_node_id = dialog.next_id
 						_dialogue_goto_state(DialogState.PLAYING)
@@ -709,9 +706,7 @@ func _process(delta) -> void:
 		
 ## 打字完成回调
 func isfinishtyping() -> void:
-	# 防御 Godot 4.7 旧 tween 的 finished 信号延迟触发：
-	# skip_typing_anim() kill tween 后，已排队的回调仍可能触发，
-	# 此时 cur_node_id 已推进到新节点，应忽略该过期回调。
+	# 忽略旧 tween 的过期回调（kill 后 finished 仍可能延迟触发）
 	if _typing_node_id != cur_node_id:
 		if DEBUG_LOG: print("忽略过期打字完成回调（期望=%s，当前=%s）" % [_typing_node_id, cur_node_id])
 		return
@@ -845,8 +840,7 @@ func _process_next() -> void:
 			var cur := _current_dialogue()
 			if cur != null and cur.dialog_type == KND_Dialogue.Type.ORDINARY_DIALOG:
 				_konado_dialogue_box.skip_typing_anim()
-				# 若 tween 已被 wait_pause 接管而 kill，skip 是空操作
-				# 此时直接显示全文并切换到 PAUSED
+				# skip 可能为空操作（tween 已被接管），此时强制显示全文
 				if dialogueState == DialogState.PLAYING:
 					_konado_dialogue_box.dialogue_label.visible_ratio = 1.0
 					_dialogue_goto_state(DialogState.PAUSED)
@@ -856,14 +850,11 @@ func _process_next() -> void:
 		DialogState.PAUSED:
 			_audio_interface.stop_voice()
 			if DEBUG_LOG: print("对话播放完成，开始播放下一个")
-			# 检查是否还有下一个节点
 			var cur: KND_Dialogue = _current_dialogue()
 			if cur == null or cur.next_id.is_empty() or cur_dialogue_shot.find_node(cur.next_id) == null:
-				# 切换到对话关闭状态
 				_dialogue_goto_state(DialogState.OFF)
 			else:
 				_goto_next_node()
-				# 切换到播放状态
 				_dialogue_goto_state(DialogState.PLAYING)
 			return
 	
@@ -887,14 +878,9 @@ func stop_dialogue() -> void:
 	
 ## 对话状态切换的方法
 func _dialogue_goto_state(dialogstate: DialogState) -> void:
-	# 重置justenter状态
 	justenter = true
-	# 切换状态到
 	dialogueState = dialogstate
-	# 不再用 set_process 控制 _process 开关：
-	# Godot 4.7 在同一帧内 set_process(false) 再 set_process(true)
-	# 可能导致下一帧 _process 不被调用，状态机卡死。
-	# PAUSED 状态下 _process 仅检查 justenter 即返回，开销可忽略。
+	# 不调用 set_process()：PAUSED 状态 _process 仅检查 justenter 即返回，开销可忽略
 	if DEBUG_LOG: print_rich("[color=yellow]切换状态到: [/color]" + str(dialogueState))
 
 ## 导航到下一个节点
