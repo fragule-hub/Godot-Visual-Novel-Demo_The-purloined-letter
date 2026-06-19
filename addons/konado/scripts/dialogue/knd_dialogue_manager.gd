@@ -550,17 +550,20 @@ func _process(delta) -> void:
 					var bgm_name = dialog.bgm_name
 					_play_bgm(bgm_name)
 					_dialogue_goto_state(DialogState.PAUSED)
+					_process_next_frame = -1
 					_process_next()
 				# 如果是停止BGM
 				elif cur_dialogue_type == KND_Dialogue.Type.STOP_BGM:
 					_audio_interface.stop_bgm()
 					_dialogue_goto_state(DialogState.PAUSED)
+					_process_next_frame = -1
 					_process_next()
 				# 如果是播放音效
 				elif cur_dialogue_type == KND_Dialogue.Type.PLAY_SOUND_EFFECT:
 					var se_name = dialog.soundeffect_name
 					_play_soundeffect(se_name)
 					_dialogue_goto_state(DialogState.PAUSED)
+					_process_next_frame = -1
 					_process_next()
 				# if-else流程控制分支
 				elif cur_dialogue_type == KND_Dialogue.Type.IFELSE_BRANCH:
@@ -674,6 +677,7 @@ func _process(delta) -> void:
 				elif cur_dialogue_type == KND_Dialogue.Type.SET_VARIABLE:
 					_handle_variable_operation(dialog)
 					_dialogue_goto_state(DialogState.PAUSED)
+					_process_next_frame = -1
 					_process_next()
 				# 如果剧终
 				elif cur_dialogue_type == KND_Dialogue.Type.SCENE_BREAK:
