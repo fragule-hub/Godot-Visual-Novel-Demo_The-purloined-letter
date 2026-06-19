@@ -61,6 +61,11 @@ var _process_next_frame: int = -1
 var _pending_wait_voice: bool = false
 var _pending_voice_wait_time: float = 0.0
 
+## 打字动画所属节点 ID（防御旧 tween 的 finished 信号延迟触发）
+## Godot 4.7 中 kill tween 后已排队的 finished 回调仍会触发，
+## 导致 isfinishtyping 误将新节点状态回退为 PAUSED。
+var _typing_node_id: String = ""
+
 ## 章节路径映射（从 chapter_map.json 加载）
 var _chapter_map: Dictionary = {}
 ## 起始章节 ID（从配置读取）
@@ -473,6 +478,7 @@ func _process(delta) -> void:
 							_acting_interface.highlight_all()
 					# 播放对话
 					_konado_dialogue_box.typing_interval = _typing_interval
+					_typing_node_id = cur_node_id
 					dialogue_text_ready.emit(content, chara_id)
 					_konado_dialogue_box.dialogue_text = content
 					_konado_dialogue_box.character_name = chara_id
@@ -699,6 +705,13 @@ func _process(delta) -> void:
 		
 ## 打字完成回调
 func isfinishtyping() -> void:
+	# 防御 Godot 4.7 旧 tween 的 finished 信号延迟触发：
+	# skip_typing_anim() kill tween 后，已排队的回调仍可能触发，
+	# 此时 cur_node_id 已推进到新节点，应忽略该过期回调。
+	if _typing_node_id != cur_node_id:
+		if DEBUG_LOG: print("忽略过期打字完成回调（期望=%s，当前=%s）" % [_typing_node_id, cur_node_id])
+		return
+
 	_dialogue_goto_state(DialogState.PAUSED)
 
 	# 面板打开时不推进
