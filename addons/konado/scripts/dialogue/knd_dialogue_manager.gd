@@ -874,8 +874,10 @@ func _dialogue_goto_state(dialogstate: DialogState) -> void:
 	justenter = true
 	# 切换状态到
 	dialogueState = dialogstate
-	# PAUSED 状态下禁用 _process，减少空闲帧开销
-	set_process(dialogstate != DialogState.PAUSED)
+	# 不再用 set_process 控制 _process 开关：
+	# Godot 4.7 在同一帧内 set_process(false) 再 set_process(true)
+	# 可能导致下一帧 _process 不被调用，状态机卡死。
+	# PAUSED 状态下 _process 仅检查 justenter 即返回，开销可忽略。
 	if DEBUG_LOG: print_rich("[color=yellow]切换状态到: [/color]" + str(dialogueState))
 
 ## 导航到下一个节点

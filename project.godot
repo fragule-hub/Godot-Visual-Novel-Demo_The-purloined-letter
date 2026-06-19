@@ -12,7 +12,7 @@ config_version=5
 
 config/name="new_novel_demo"
 run/main_scene="res://scenes/ui/title_screen.tscn"
-config/features=PackedStringArray("4.6", "Forward Plus")
+config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="uid://cpyrf4785kbpa"
 
 [autoload]

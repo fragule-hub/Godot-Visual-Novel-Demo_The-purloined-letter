@@ -459,16 +459,21 @@ func _reset_scroll_state() -> void:
 
 ## 滚轮滚动会话处理（防误触 + 边界让位）
 func _handle_scroll_wheel(event: InputEventMouseButton) -> void:
-	# ── 打字中：下滚 = 跳过动画，上滚 = 忽略 ──
+	# ── 打字中：下滚 = 跳过动画，上滚 = 打开回顾 ──
 	if _is_currently_typing():
 		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			on_dialogue_click.emit()
+		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			scroll_up_at_top.emit()
 		accept_event()
 		return
 
 	if not _is_dialogue_overflowing():
-		# 文字不溢出：滚轮 = 推进对话
-		on_dialogue_click.emit()
+		# 文字不溢出：上滚 = 打开回顾，下滚 = 推进对话
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			scroll_up_at_top.emit()
+		else:
+			on_dialogue_click.emit()
 		return
 
 	var now := Time.get_ticks_msec()
