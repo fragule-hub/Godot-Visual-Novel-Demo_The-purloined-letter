@@ -297,6 +297,6 @@ branch c2_merge:
 
     "" "Eve was silent for several seconds, her expression looking like she was seriously questioning her life."
 
-    "Eve" "I need some time to think. {change:Eve,neutral}{wait_pause:3,3}"
+    "Eve" "I need some time to think... {change:Eve,neutral}"
 
     jump_id chapter3 erase

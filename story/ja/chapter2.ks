@@ -297,6 +297,6 @@ branch c2_merge:
 
     "" "イヴが数秒黙り込んだ。その表情は、人生を見つめ直しているかのようだった。"
 
-    "イヴ" "少し考えさせてください。{change:Eve,neutral}{wait_pause:3,3}"
+    "イヴ" "少し考えさせてください…{change:Eve,neutral}"
 
     jump_id chapter3 erase

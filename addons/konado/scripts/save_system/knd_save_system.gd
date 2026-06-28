@@ -291,10 +291,25 @@ func _restore_dialogue_state(state: Dictionary) -> void:
 		var path := dialogue_manager.get_chapter_path(state["chapter_id"])
 		if path:
 			shot = dialogue_manager._ks_compiler.compile_file(path)
-			dialogue_manager._current_chapter_id = state["chapter_id"]
 
 	if shot:
 		dialogue_manager.set_shot(shot)
+		# 先 set_shot 再设 chapter_id（set_shot 内部会清空 _current_chapter_id）
+		if state.has("chapter_id") and not state["chapter_id"].is_empty():
+			dialogue_manager._current_chapter_id = state["chapter_id"]
+
+	# 回退方案：先尝试按当前语言加载起始章节，兜底到 start_dialogue_shot
+	elif dialogue_manager._start_chapter_id:
+		var fallback_path := dialogue_manager.get_chapter_path(dialogue_manager._start_chapter_id)
+		if not fallback_path.is_empty():
+			var fallback_shot := dialogue_manager._ks_compiler.compile_file(fallback_path)
+			if fallback_shot:
+				dialogue_manager.set_shot(fallback_shot)
+				dialogue_manager._current_chapter_id = dialogue_manager._start_chapter_id
+			elif dialogue_manager.start_dialogue_shot:
+				dialogue_manager.set_shot(dialogue_manager.start_dialogue_shot)
+		elif dialogue_manager.start_dialogue_shot:
+			dialogue_manager.set_shot(dialogue_manager.start_dialogue_shot)
 	elif dialogue_manager.start_dialogue_shot:
 		dialogue_manager.set_shot(dialogue_manager.start_dialogue_shot)
 

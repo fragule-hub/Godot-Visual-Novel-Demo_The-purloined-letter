@@ -852,6 +852,7 @@ func _process_next() -> void:
 			if DEBUG_LOG: print("对话播放完成，开始播放下一个")
 			var cur: KND_Dialogue = _current_dialogue()
 			if cur == null or cur.next_id.is_empty() or cur_dialogue_shot.find_node(cur.next_id) == null:
+				if DEBUG_LOG: printerr("PAUSED→OFF: cur=%s next_id=%s find=%s" % [cur != null, cur.next_id if cur else "N/A", cur_dialogue_shot.find_node(cur.next_id if cur else "") != null])
 				_dialogue_goto_state(DialogState.OFF)
 			else:
 				_goto_next_node()
@@ -861,8 +862,10 @@ func _process_next() -> void:
 ## 自动下一个，添加信号解绑功能保证只被触发一次
 func _auto_process_next(s: Signal) -> void:
 	_dialogue_goto_state(DialogState.PAUSED)
-	if not s.is_null() and s.is_connected(_auto_process_next):
-		s.disconnect(_auto_process_next)
+	# 使用 bound callable 匹配 disconnect（连接时用的是 _auto_process_next.bind(s)）
+	var bound := _auto_process_next.bind(s)
+	if not s.is_null() and s.is_connected(bound):
+		s.disconnect(bound)
 		if DEBUG_LOG: print("触发自动下一个信号")
 	_process_next()
 	
@@ -1028,9 +1031,9 @@ func _execute_jump_transition(target_path: String, effect, chapter_id: String = 
 	# ⑤ 编译并加载新 shot
 	var res := _ks_compiler.compile_file(target_path)
 	if res:
+		set_shot(res)
 		if not chapter_id.is_empty():
 			_current_chapter_id = chapter_id
-		set_shot(res)
 		_dialogue_goto_state(DialogState.PLAYING)
 	else:
 		printerr("跳转目标加载失败：%s" % target_path)
